@@ -275,11 +275,11 @@ This uses the simulator-specific TF configuration and publishes the generated ma
 
 ![Foxglove Fixed frame and Display frame set to slam_map](assets/foxglove-slam-frame-settings.png)
 
-4. Under **Topics**, show `/slam_map` and `/scan`; hide the simulator's original `/map`. Optionally show `/slam_toolbox/graph_visualization` if available:
+4. Under **Topics**, show `/slam_map` and `/scan` and hide the simulator's original `/map` to see SLAM work in real time.
 
 ![Foxglove SLAM topic visibility settings](assets/foxglove-slam-topic-visibility.png)
 
-The new occupancy grid should fill in as the car moves through the environment.
+The new occupancy grid should fill in as the car moves through the environment. (Ensure movement node is still running)
 
 #### Saving the Map
 
@@ -315,8 +315,6 @@ This uses the simulator's existing map server and avoids launching a duplicate m
 1. Open the **3D panel**.
 2. Set **Fixed frame** and **Display frame** to `map`.
 3. Enable these topics:
-
----
 
 | Topic                   |
 | ----------------------- |
