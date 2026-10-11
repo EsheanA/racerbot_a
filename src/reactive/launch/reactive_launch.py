@@ -71,6 +71,11 @@ def generate_launch_description():
         default_value="1.0",
         description="Scale factor for the steering-to-speed curve",
     )
+    max_slew_rate = DeclareLaunchArgument(
+        "max_slew_rate",
+        default_value="170.0",
+        description="Maximum rate of change of commanded steering angle, in degrees/sec.",
+    )
 
     return LaunchDescription(
         [
@@ -85,6 +90,7 @@ def generate_launch_description():
             min_speed,
             hysteresis_alpha,
             speed_curve_scale,
+            max_slew_rate,
             # Launch gap_finder_node
             Node(
                 package="reactive",
@@ -108,13 +114,12 @@ def generate_launch_description():
                         "degree": LaunchConfiguration("least_squares_degree"),
                         "steering_gain": LaunchConfiguration("steering_gain"),
                         "k_samples": LaunchConfiguration("k_samples"),
-                        "max_steering_angle": LaunchConfiguration(
-                            "max_steering_angle"
-                        ),
+                        "max_steering_angle": LaunchConfiguration("max_steering_angle"),
                         "max_speed": LaunchConfiguration("max_speed"),
                         "min_speed": LaunchConfiguration("min_speed"),
                         "hysteresis_alpha": LaunchConfiguration("hysteresis_alpha"),
                         "speed_curve_scale": LaunchConfiguration("speed_curve_scale"),
+                        "max_slew_rate": LaunchConfiguration("max_slew_rate"),
                     }
                 ],
             ),
@@ -127,7 +132,7 @@ def generate_launch_description():
                 parameters=[
                     {
                         "enable_deadman": LaunchConfiguration("enable_deadman"),
-                        "enable_ttc":  LaunchConfiguration("enable_ttc")
+                        "enable_ttc": LaunchConfiguration("enable_ttc"),
                     }
                 ],
             ),
