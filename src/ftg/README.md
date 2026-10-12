@@ -17,7 +17,7 @@ ros2 launch ftg ftg_launch.py
 ## Launching in sim
 
 ```bash
-ros2 launch ftg ftg_launch.py
+ros2 launch ftg ftg_launch.py enable_deadman:=false enable_ttc:=false
 ```
 
 ## Safety Node

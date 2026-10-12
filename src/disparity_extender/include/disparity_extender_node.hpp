@@ -14,6 +14,7 @@ public:
 private:
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr drive_pub_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_sub_;
+    float prev_steer_ = 0.0f;
     double max_lidar_range_;
     double car_width_;
     double car_width_extended_;
@@ -22,6 +23,9 @@ private:
     double minimum_gap_threshold_;
     double max_speed_;
     double min_speed_;
+    double alpha_;
+    double wheelbase_;
+    double max_lateral_acc_;
 
     /// @brief Callback invoked each time the lidar completes a new scan.
     /// @param scan_msg Shared pointer to the incoming LaserScan message.

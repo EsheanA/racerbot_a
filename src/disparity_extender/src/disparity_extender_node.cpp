@@ -8,12 +8,15 @@ DisparityExtenderNode::DisparityExtenderNode() : Node("disparity_extender_node")
     // Declare with a default value
     this->declare_parameter("max_lidar_range", 25.0);
     this->declare_parameter("car_width", 0.4);
-    this->declare_parameter("car_width_extended", 0.55);
+    this->declare_parameter("car_width_extended", 0.65);
     this->declare_parameter("disparity_threshold", 1.0);
     this->declare_parameter("fov_half_angle_deg", 90.0);
     this->declare_parameter("minimum_gap_threshold", 0.1);
-    this->declare_parameter("max_speed", 3.5);
+    this->declare_parameter("max_speed", 3.0);
     this->declare_parameter("min_speed", 0.5);
+    this->declare_parameter("alpha", 0.8);
+    this->declare_parameter("wheelbase", 0.33);
+    this->declare_parameter("max_lateral_acc", 3.5);
 
     // Read into member variables
     max_lidar_range_ = this->get_parameter("max_lidar_range").as_double();
@@ -24,6 +27,9 @@ DisparityExtenderNode::DisparityExtenderNode() : Node("disparity_extender_node")
     minimum_gap_threshold_ = this->get_parameter("minimum_gap_threshold").as_double();
     max_speed_ = this->get_parameter("max_speed").as_double();
     min_speed_ = this->get_parameter("min_speed").as_double();
+    alpha_ = this->get_parameter("alpha").as_double();
+    wheelbase_ = this->get_parameter("wheelbase").as_double();
+    max_lateral_acc_ = this->get_parameter("max_lateral_acc").as_double();
 
     drive_pub_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("drive", 10);
 
@@ -209,39 +215,26 @@ int DisparityExtenderNode::find_furthest_point(vector<float> &ranges, const std:
 
 void DisparityExtenderNode::drive_best_point(const float range, const float steering_angle)
 {
-    // Speed depends on target point range
-    float velocity;
+    float steer = static_cast<float>(alpha_) * steering_angle + (1.0f - alpha_) * prev_steer_;
+    prev_steer_ = steer;
 
-    /* Slower speed at small range
-    double min_range = 0.5;
-    double max_range = 4.0;
+    // Limit 1: slow down for sharp turns (v = sqrt(a * R), R = wheelbase / tan(steer))
+    float abs_tan = std::tan(std::abs(steer));
+    float v_turn = max_speed_;
+    if (abs_tan > 1e-3f)
+    {
+        v_turn = std::sqrt(max_lateral_acc_ * wheelbase_ / abs_tan);
+    }
 
-    double t = (range - min_range) / (max_range - min_range);
-    t = std::clamp(t, 0.0, 1.0);
+    // Limit 2: slow down when little distance is left to turn
+    float v_range = std::sqrt(max_lateral_acc_ * range);
 
-    velocity = static_cast<float>(min_speed_ + (t * t) * (max_speed_ - min_speed_));
-    */
-
-    // Step linear
-    if (range > 4.0f)
-        velocity = max_speed_;
-    else if (range > 3.0f)
-        velocity = 3.0f;
-    else if (range > 2.0f)
-        velocity = 2.0f;
-    else if (range > 1.0f)
-        velocity = 1.0f;
-    else if (range > 0.5)
-        velocity = 0.5f;
-    else
-        velocity = min_speed_;
-
+    float velocity = std::min({static_cast<float>(max_speed_), v_turn, v_range});
     velocity = std::clamp(velocity, static_cast<float>(min_speed_), static_cast<float>(max_speed_));
 
-    // Publishing to drive
     ackermann_msgs::msg::AckermannDriveStamped drive_msg;
     drive_msg.header.stamp = this->now();
-    drive_msg.drive.steering_angle = steering_angle;
+    drive_msg.drive.steering_angle = steer;
     drive_msg.drive.speed = velocity;
     drive_pub_->publish(drive_msg);
 }
