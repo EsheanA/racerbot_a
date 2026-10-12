@@ -24,6 +24,8 @@ private:
     double max_speed_;
     double min_speed_;
     double alpha_;
+    double wheelbase_;
+    double max_lateral_acc_;
 
     /// @brief Callback invoked each time the lidar completes a new scan.
     /// @param scan_msg Shared pointer to the incoming LaserScan message.

@@ -8,13 +8,15 @@ DisparityExtenderNode::DisparityExtenderNode() : Node("disparity_extender_node")
     // Declare with a default value
     this->declare_parameter("max_lidar_range", 25.0);
     this->declare_parameter("car_width", 0.4);
-    this->declare_parameter("car_width_extended", 0.55);
+    this->declare_parameter("car_width_extended", 0.65);
     this->declare_parameter("disparity_threshold", 1.0);
     this->declare_parameter("fov_half_angle_deg", 90.0);
     this->declare_parameter("minimum_gap_threshold", 0.1);
-    this->declare_parameter("max_speed", 3.5);
+    this->declare_parameter("max_speed", 3.0);
     this->declare_parameter("min_speed", 0.5);
-    this->declare_parameter("alpha", 0.4);
+    this->declare_parameter("alpha", 0.8);
+    this->declare_parameter("wheelbase", 0.33);
+    this->declare_parameter("max_lateral_acc", 3.5);
 
     // Read into member variables
     max_lidar_range_ = this->get_parameter("max_lidar_range").as_double();
@@ -26,6 +28,8 @@ DisparityExtenderNode::DisparityExtenderNode() : Node("disparity_extender_node")
     max_speed_ = this->get_parameter("max_speed").as_double();
     min_speed_ = this->get_parameter("min_speed").as_double();
     alpha_ = this->get_parameter("alpha").as_double();
+    wheelbase_ = this->get_parameter("wheelbase").as_double();
+    max_lateral_acc_ = this->get_parameter("max_lateral_acc").as_double();
 
     drive_pub_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("drive", 10);
 
@@ -211,47 +215,26 @@ int DisparityExtenderNode::find_furthest_point(vector<float> &ranges, const std:
 
 void DisparityExtenderNode::drive_best_point(const float range, const float steering_angle)
 {
-    // Speed is the lower of two limits: slow down for sharp turns, and slow down when the target point is close.
-
-    // Tuning constants
-    const float wheelbase      = 0.33f;  // [m] distance between front and rear axles
-    const float max_steer      = 0.40f;  // [rad] physical steering limit of the car
-    const float max_lateral_acc = 4.0f;  // [m/s^2] how hard we allow cornering (lower = slower turns)
-    const float max_brake_acc  = 3.0f;   // [m/s^2] how hard the car can brake
-    const float stop_margin    = 0.3f;   // [m] distance to keep from the target point
-
-    // Clamp steering to what the car can actually do
-    float steer = std::clamp(steering_angle, -max_steer, max_steer);
-    steer = static_cast<float>(alpha_) * steer + (1.0f - alpha_) * prev_steer_;
+    float steer = static_cast<float>(alpha_) * steering_angle + (1.0f - alpha_) * prev_steer_;
     prev_steer_ = steer;
 
-    // Limit 1: Turning speed
-    // Turn radius R = wheelbase / tan(steer).
-    // Lateral acceleration = v^2 / R, so the max speed that keeps it under
-    // max_lateral_acc is v = sqrt(max_lateral_acc * R).
-    // Driving straight -> R is huge -> no limit.
+    // Limit 1: slow down for sharp turns (v = sqrt(a * R), R = wheelbase / tan(steer))
     float abs_tan = std::tan(std::abs(steer));
     float v_turn = max_speed_;
     if (abs_tan > 1e-3f)
     {
-        float turn_radius = wheelbase / abs_tan;
-        v_turn = std::sqrt(max_lateral_acc * turn_radius);
+        v_turn = std::sqrt(max_lateral_acc_ * wheelbase_ / abs_tan);
     }
 
-    // Limit 2: Stopping distance
-    // The car must be able to stop before reaching the target point.
-    // From v^2 = 2 * a * d  ->  v = sqrt(2 * a * d).
-    float usable_distance = std::max(range - stop_margin, 0.0f);
-    float v_stop = std::sqrt(2.0f * max_brake_acc * usable_distance);
+    // Limit 2: slow down when little distance is left to turn
+    float v_range = std::sqrt(max_lateral_acc_ * range);
 
-    // Final speed: the most restrictive limit wins
-    float velocity = std::min({static_cast<float>(max_speed_), v_turn, v_stop});
+    float velocity = std::min({static_cast<float>(max_speed_), v_turn, v_range});
     velocity = std::clamp(velocity, static_cast<float>(min_speed_), static_cast<float>(max_speed_));
 
-    // Publishing to drive
     ackermann_msgs::msg::AckermannDriveStamped drive_msg;
     drive_msg.header.stamp = this->now();
-    drive_msg.drive.steering_angle = steering_angle;
+    drive_msg.drive.steering_angle = steer;
     drive_msg.drive.speed = velocity;
     drive_pub_->publish(drive_msg);
 }
