@@ -39,7 +39,6 @@ Contains notes and learnings from testing in simulation, on the car, and from le
   - No solid speed function yet.
 
 ### Disparity Extender (DE)
-
 - Decreasing the speed caused the car to crash into more corners. Added saftey bubble to try and counteract this. Good
 - Car seemed to drive in "S-Curves" on straightaways
 - Hypothesis was that the car would come out of turns slightly turned, drive towards a wall and then compensate, causing it to drive to the other wall. This process compounded over time and resulted in the "S-Curves"
@@ -152,18 +151,17 @@ Contains notes and learnings from testing in simulation, on the car, and from le
   - No solid speed function yet.
 
 ### Disparity Extender (DE)
+- Speed
+    - Decreasing the speed caused the car to crash into more corners. Added saftey bubble to try and counteract this. Good
+    - should be the lower of two limits: slow down for sharp turns, and slow down when the target point is close. Okay but sometimes can be too slow, might or might not be a tuning problem.
+- Drunk (snaking left and right)
+    - The car is drunk because it steers toward the furthest point, which constantly shifts each time
+    - Aim for middle gap: Basically FTG if we do that, somewhat defeats the idea of DE. To be looked into
+    - Steering is smoothed with a low-pass filter: each new angle is blended with the previous one (`alpha`), so a single jumpy scan only nudges the car instead of jerking it. Lower `alpha` = smoother but slower to react.
+- Obstacle avoidance
+    - Too much disparity extending and we slowly go to walls, too little and we crash corners
+    - Tried using safety bubble to avoid crashing into corners but this isn't good because it doesn't work well and is taking the role of disparity extender.
 
-- Decreasing the speed caused the car to crash into more corners. Added saftey bubble to try and counteract this. Good
-- Car seemed to drive in "S-Curves" on straightaways
-- Hypothesis was that the car would come out of turns slightly turned, drive towards a wall and then compensate, causing it to drive to the other wall. This process compounded over time and resulted in the "S-Curves"
-- Deviation Penalty
-  - Apply a penalty that influences the car to drive straight based on a penalty factor
-  - No matter what values were tried for the penalty factor, the car either drove straight into a wall or the penalty had 0 effect
-- Limiting the angle returned from the function that determined steering angle to the car's turning range also had no effect
-- Slew rate limiter
-  - Capped how fast the turning angle could change per callback tick, rather than how far obstacles could be.
-  - This allowed for more smoother turns and helped the car stay straight coming out of turns
-  - This fixed the "S-Curves" issue
 
 ## Mapping Driving
 
