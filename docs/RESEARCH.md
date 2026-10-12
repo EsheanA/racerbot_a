@@ -53,9 +53,9 @@ Contains notes and learnings from testing in simulation, on the car, and from le
 - Least-squares steering
   - The car seemed to drive in S-curves on straightaways.
   - The hypothesis was that the car exited turns slightly turned, drove toward a wall, and then over-corrected toward the other wall. This process compounded over time.
-  - Applying a deviation penalty either drove the car straight into a wall or had no effect, regardless of the penalty factor.
+  - A deviation penalty was intended to bias steering toward driving straight, weighted by a penalty factor. No matter what values were tried, it either drove the car straight into a wall or had no effect.
   - Limiting the returned steering angle to the car's turning range also had no effect.
-  - A slew-rate limiter capped how fast the turning angle could change per callback tick. This produced smoother turns, helped the car stay straight after turns, and fixed the S-curves issue.
+  - A slew-rate limiter capped how fast the turning angle could change per callback tick, rather than limiting how far obstacles were extended. This produced smoother turns, helped the car stay straight after turns, and fixed the S-curves issue.
 
 ## AI Driving
 
