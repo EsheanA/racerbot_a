@@ -13,4 +13,6 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
 
   int deadman_button_;
+  
+  bool last_deadman_state;
 };

@@ -10,6 +10,7 @@ SafetyNode::SafetyNode() : rclcpp::Node("safety_node") {
   this->declare_parameter("deadman_button", 4);
 
   deadman_button_ = this->get_parameter("deadman_button").as_int();
+  last_deadman_state = false;
 }
 
 void SafetyNode::joy_callback(const sensor_msgs::msg::Joy::ConstSharedPtr joy_msg) {
@@ -25,6 +26,15 @@ void SafetyNode::joy_callback(const sensor_msgs::msg::Joy::ConstSharedPtr joy_ms
     }
 
     this->deadman_held_pub_->publish(msg);
+
+    if (last_deadman_state != msg.data) {
+      if (msg.data == true) {
+        RCLCPP_INFO(this->get_logger(), "Deadman now engaged");
+      } else {
+        RCLCPP_INFO(this->get_logger(), "Deadman now disengaged");
+      }
+    }
+    last_deadman_state = msg.data;
 }
 
 int main(int argc, char **argv) {
