@@ -11,4 +11,6 @@ public:
 private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr deadman_held_pub_;
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
+
+  int deadman_button_;
 };
