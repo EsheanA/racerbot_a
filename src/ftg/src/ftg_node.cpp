@@ -11,11 +11,13 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node")
     this->declare_parameter("fov_half_angle_deg", 90.0);
     this->declare_parameter("car_width", 0.4);
     this->declare_parameter("minimum_gap_threshold", 1.0);
+    this->declare_parameter("safety_bubble_scale", 0.5);
 
     max_lidar_range_ = this->get_parameter("max_lidar_range").as_double();
     fov_half_angle_ = this->get_parameter("fov_half_angle_deg").as_double() * M_PI / 180.0;
     car_width_ = this->get_parameter("car_width").as_double();
     minimum_gap_threshold_ = this->get_parameter("minimum_gap_threshold").as_double();
+    safety_bubble_scale_ = this->get_parameter("safety_bubble_scale").as_double();
 
     this->drive_msg_publisher = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("drive", 10);
     this->laser_scan_subscriber = this->create_subscription<sensor_msgs::msg::LaserScan>(
@@ -67,7 +69,7 @@ void FollowTheGapNode::draw_safety_bubble(const sensor_msgs::msg::LaserScan::Con
 
     // Draw safety buble by calculating theta for the arc made by r = closest point with s = car width
 
-    double theta = 2.0 * std::atan2(car_width_ / 2.0, ranges[closest_index]);
+    double theta = 2.0 * std::atan2(car_width_ * safety_bubble_scale_, ranges[closest_index]);
 
     size_t index_increment = (theta / scan_msg->angle_increment) / 2; // Used on each side so divide by 2
 
