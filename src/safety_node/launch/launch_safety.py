@@ -11,15 +11,29 @@ def generate_launch_description():
         description="Which button should be considered the deadman switch",
     )
 
+    message_timeout_duration = DeclareLaunchArgument(
+        "message_timeout_duration",
+        default_value="250",
+        description="How many milliseconds the node should wait for a /joy message before it assumes that no /joy is connected",
+    )
+
     return LaunchDescription(
         [
             deadman_button,
+            message_timeout_duration,
             Node(
                 package="safety_node",
                 executable="safety_node",
                 name="safety_node",
                 output="screen",
-                parameters=[{"deadman_button": LaunchConfiguration("deadman_button")}],
+                parameters=[
+                    {"deadman_button": LaunchConfiguration("deadman_button")},
+                    {
+                        "message_timeout_duration": LaunchConfiguration(
+                            "message_timeout_duration"
+                        )
+                    },
+                ],
             ),
         ]
     )

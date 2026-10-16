@@ -1,5 +1,7 @@
 #include "safety.hpp"
 
+constexpr double millisecond_to_nanosecond = 1000000.0;
+
 SafetyNode::SafetyNode() : rclcpp::Node("safety_node") {
   this->deadman_held_pub_ =
       this->create_publisher<std_msgs::msg::Bool>("/safety/deadman", 10);
@@ -8,8 +10,11 @@ SafetyNode::SafetyNode() : rclcpp::Node("safety_node") {
       std::bind(&SafetyNode::joy_callback, this, std::placeholders::_1));
   
   this->declare_parameter("deadman_button", 4);
+  this->declare_parameter("message_timeout_duration", 250);
 
   deadman_button_ = this->get_parameter("deadman_button").as_int();
+  message_timeout_duration_ = this->get_parameter("message_timeout_duration").as_double() * millisecond_to_nanosecond;
+
   last_deadman_state = false;
 
   timer_ = create_wall_timer(std::chrono::milliseconds(50), [this]() {
