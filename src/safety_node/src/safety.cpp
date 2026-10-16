@@ -11,9 +11,33 @@ SafetyNode::SafetyNode() : rclcpp::Node("safety_node") {
 
   deadman_button_ = this->get_parameter("deadman_button").as_int();
   last_deadman_state = false;
+
+  timer_ = create_wall_timer(std::chrono::milliseconds(50), [this]() {
+      auto age = (now() - last_msg_time_).nanoseconds();
+
+      // ensures that the deadman is held when messages stop being sent from /joy
+      if (age >= message_timeout_duration_ && joystick_active_) {
+        RCLCPP_INFO(this->get_logger(), "/joy message timeout exceeded, engaging auto deadman hold...");
+        joystick_active_ = false;
+      }
+
+      if (!joystick_active_) {
+        std_msgs::msg::Bool msg;
+        msg.data = false;
+        this->deadman_held_pub_->publish(msg);
+      }
+  });
+
+  RCLCPP_INFO(this->get_logger(), "Safety node launched successfully. Engaging auto deadman hold until /joy connects...");
 }
 
 void SafetyNode::joy_callback(const sensor_msgs::msg::Joy::ConstSharedPtr joy_msg) {
+  last_msg_time_ = now();
+  if (!joystick_active_) {
+    RCLCPP_INFO(this->get_logger(), "/joy connected, disengaging auto deadman hold...");
+  }
+  joystick_active_ = true;
+
   std_msgs::msg::Bool msg;
    if (static_cast<int>(joy_msg->buttons.size()) > deadman_button_) {
         if (joy_msg->buttons[deadman_button_] != 0) {
