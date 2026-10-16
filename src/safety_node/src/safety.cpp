@@ -10,7 +10,7 @@ SafetyNode::SafetyNode() : rclcpp::Node("safety_node") {
       std::bind(&SafetyNode::joy_callback, this, std::placeholders::_1));
   
   this->declare_parameter("deadman_button", 4);
-  this->declare_parameter("message_timeout_duration", 250.0);
+  this->declare_parameter("message_timeout_duration", 50.0);
 
   deadman_button_ = this->get_parameter("deadman_button").as_int();
   message_timeout_duration_ = this->get_parameter("message_timeout_duration").as_double() * millisecond_to_nanosecond;

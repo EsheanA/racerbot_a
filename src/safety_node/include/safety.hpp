@@ -13,7 +13,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
 
   int deadman_button_;
-  double message_timeout_duration_ = 250000000.0;
+  double message_timeout_duration_ = 50000000.0;
   
   bool last_deadman_state;
   bool joystick_active_;
