@@ -11,13 +11,17 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node")
     this->declare_parameter("fov_half_angle_deg", 90.0);
     this->declare_parameter("car_width", 0.4);
     this->declare_parameter("minimum_gap_threshold", 1.0);
-    this->declare_parameter("safety_bubble_scale", 0.5);
+    this->declare_parameter("safety_bubble_scale", 0.0);
+    this->declare_parameter("prev_angle_adjuster", 0.9);
 
     max_lidar_range_ = this->get_parameter("max_lidar_range").as_double();
     fov_half_angle_ = this->get_parameter("fov_half_angle_deg").as_double() * M_PI / 180.0;
     car_width_ = this->get_parameter("car_width").as_double();
     minimum_gap_threshold_ = this->get_parameter("minimum_gap_threshold").as_double();
     safety_bubble_scale_ = this->get_parameter("safety_bubble_scale").as_double();
+    prev_angle_adjuster_ = this->get_parameter("prev_angle_adjuster").as_double();
+
+    prev_angle_ = 0;
 
     this->drive_msg_publisher = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("drive", 10);
     this->laser_scan_subscriber = this->create_subscription<sensor_msgs::msg::LaserScan>(
@@ -164,7 +168,12 @@ void FollowTheGapNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSh
         return;
     }
 
-    float steering_angle = scan_msg->angle_min + scan_msg->angle_increment * best_idx;
+    float current_angle = scan_msg->angle_min + scan_msg->angle_increment * best_idx;
+
+    // adjust angle based on previous
+    float steering_angle = prev_angle_ * 0.999 + current_angle * (1 - 0.999);
+    prev_angle_ = steering_angle;
+
     float abs_angle = std::abs(steering_angle);
 
     float speed;
