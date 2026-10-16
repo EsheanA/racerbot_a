@@ -28,8 +28,12 @@ private:
     double min_speed_ = 0.25;
     double hysteresis_alpha_ = 0.3;
     double speed_curve_scale_ = 1.0;
+    double max_slew_rate_ = 0.1;
 
     double filtered_steering_angle_ = 0.0;
+    double commanded_steering_angle_ = 0.0;
+    double last_callback_time_ = 0.0;
+
 
     /// @brief Callback invoked each time we find a valid gap from the laser scan.
     /// @param gap_msg Shared pointer to the incoming Gap message.
