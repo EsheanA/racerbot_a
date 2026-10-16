@@ -9,7 +9,7 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node")
    // ROS2 parameters
     this->declare_parameter("max_lidar_range", 10.0);
     this->declare_parameter("fov_half_angle_deg", 90.0);
-    this->declare_parameter("car_width", 0.35);
+    this->declare_parameter("car_width", 0.4);
     this->declare_parameter("minimum_gap_threshold", 1.0);
 
     max_lidar_range_ = this->get_parameter("max_lidar_range").as_double();
@@ -35,9 +35,13 @@ vector<float> FollowTheGapNode::preprocess_lidar(const sensor_msgs::msg::LaserSc
         ranges[i] = std::min(ranges[i], static_cast<float>(max_lidar_range_));
     }
 
+    vector<float> smooth = ranges;
+
     for (size_t i = 1; i < ranges.size() - 1; ++i) {
-        ranges[i] = (ranges[i-1] + ranges[i] + ranges[i+1]) / 3.0f;
+        smooth[i] = (ranges[i-1] + ranges[i] + ranges[i+1]) / 3.0f;
     }
+
+    ranges = smooth;
 
     return ranges;
 }
@@ -163,46 +167,28 @@ void FollowTheGapNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSh
     float steering_angle = scan_msg->angle_min + scan_msg->angle_increment * best_idx;
     float abs_angle = std::abs(steering_angle);
 
-    // New speed stuff below this line (everything above is untouched)
-    float min_speed = 2.0f; // change max/min here
-    float max_speed = 5.0f;
+    float speed;
 
-    // Addition 1: checking walls next to car
-    int center_idx = ranges.size() / 2; 
-    int idx_90_deg = (M_PI / 2.0) / scan_msg->angle_increment; // Number of LIDAR scans for 90 degrees. 
-    int left_idx = center_idx + idx_90_deg; // LIDAR index for 90 degrees left
-    int right_idx = center_idx - idx_90_deg; // LIDAR index for 90 degrees right 
-    
-    float left_dist = (left_idx < (static_cast<int>(scan_msg->ranges.size()))) ? scan_msg->ranges[left_idx] : max_lidar_range_; // checks distance for left_idx IF it is in the lidar array at the current moment.
-    float right_dist = (right_idx >= 0) ? scan_msg->ranges[right_idx] : max_lidar_range_; // checks distance for right_idx IF it is in the lidar array at the current moment.
-    
+    // --- Angle-based factor ---
+    double max_angle = 30.0 * M_PI / 180.0; // angle at/beyond which speed hits its minimum
+    double min_angle_speed = 0.5;
+    double max_angle_speed = 4.0;
 
+    double t_angle = std::clamp(abs_angle / max_angle, 0.0, 1.0);
+    double angle_speed = max_angle_speed - t_angle * (max_angle_speed - min_angle_speed);
 
-    float speed_lateral = max_speed; // Set the default speed for car between walls as max speed.1
-    if (left_dist < (car_width_ / 1)  || right_dist < (car_width_ / 1) ) { // If the wall to the left or right side of the car is less than the car's width, slow down. (Can change this by changing (car_width_ / 1))
-        speed_lateral = min_speed; // Possibly make this a smoother function to dynamically change depending on distance to parallel walls?
-    }
+    // --- Range-based factor ---
+    double target_range = static_cast<float>(ranges[best_idx]);
+    double min_range = 0.5;  // range at/below which speed hits its minimum
+    double max_range = 4.0;  // range at/above which speed hits its maximum
+    double min_range_speed = 0.5;
+    double max_range_speed = 4.0;
 
-    // Addition 2: check if distnace in front of car is small, if so, slow down
-    float target_distance = ranges[best_idx];
-    float speed_forward = min_speed + (target_distance / max_lidar_range_) * (max_speed - min_speed); 
-    
-    // Addition 3: reduce speed depending on angle being turned. (NOT a piecewise funciton anymore, uses cos(x) to smooth out velocity changes.)
-   float speed_steer = max_speed; // set default speed to max if car is not turning by atleast 10 degrees
-    if (abs_angle >= (10 * (M_PI/180))){ // if turn requires more than 10 degrees (in radians), move speed to this speed.
-    speed_steer = 1.0 + (min_speed) * std::cos(abs_angle);
-    }
+    double t_range = std::clamp((target_range - min_range) / (max_range - min_range), 0.0, 1.0);
+    double range_speed = min_range_speed + t_range * (max_range_speed - min_range_speed);
 
-    // Choosing the minimum speed out of all the different speed's depending on car's position. (also include max_speed in case of car is in a location with no block ahead, no turns or close walls.)
-    float target_speed = std::min({speed_lateral, speed_forward, speed_steer, max_speed});
-    
-    // Addition 5: acceleration system to smooth out car velocity (using another variable to increment up to the chosen target speed allows us to not have sudden jumps in speed.)
-    float max_accel_step = 0.1f; // change this to change acceleration.
-    if (target_speed > current_speed_ + max_accel_step) current_speed_ += max_accel_step;
-    else if (target_speed < current_speed_ - max_accel_step) current_speed_ -= max_accel_step;
-    else current_speed_ = target_speed;
-    
-    // ------------------------
+    // --- Combine: take the more conservative (lower) of the two ---
+    speed = static_cast<float>(std::min(angle_speed, range_speed) * 1.2);
 
     ackermann_msgs::msg::AckermannDriveStamped drive_msg;
     drive_msg.header.stamp = scan_msg->header.stamp;

@@ -61,5 +61,6 @@ private:
     int deadman_button_;
     double joy_timeout_sec_;
     bool enable_deadman_;
+    bool enable_ttc_;
     double max_ttc_angle_deg_;
 };

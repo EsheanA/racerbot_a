@@ -18,14 +18,14 @@ Your primary task is to oversee the team and provide support wherever needed.
 
 ## Software Developers (8)
 
-- [Arianna Suen](https://github.com/ariannasuen)
 - [Aston Kwan-Lai](https://github.com/magefiredoom)
 - [Athanasius Liu](https://github.com/wishadele)
 - [Keyla Wijesinghe](https://github.com/KeylaRW)
 - [Nathan Jacobson](https://github.com/grqphical)
 - [Rafael Feng](https://github.com/rfeng0)
 - [Maryam Mohsen](https://github.com/omaklovesmaryam)
-- [Qusai Sherif](https://github.com/Qusai1717)
+- [Vince Ong](https://github.com/maisinxyz)
+- [Mark Cao](https://github.com/markisanidiotttt)
 
 Currently, there are no fixed teams, and all of the following responsibilities are shared.
 

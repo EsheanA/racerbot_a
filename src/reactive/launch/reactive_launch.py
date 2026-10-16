@@ -12,6 +12,12 @@ def generate_launch_description():
         description="Whether the deadman button gate is enforced by safety_node",
     )
 
+    enable_ttc_arg = DeclareLaunchArgument(
+        "enable_ttc",
+        default_value="true",
+        description="Whether the ttc braking is enforced by safety_node",
+    )
+
     use_fallback_follow_method = DeclareLaunchArgument(
         "use_fallback_follow_method",
         default_value="false",
@@ -44,7 +50,7 @@ def generate_launch_description():
 
     max_speed = DeclareLaunchArgument(
         "max_speed",
-        default_value="4",
+        default_value="4.0",
         description="Maximum forward speed allowed for the gap follower in meters per second",
     )
 
@@ -65,10 +71,16 @@ def generate_launch_description():
         default_value="1.0",
         description="Scale factor for the steering-to-speed curve",
     )
+    max_slew_rate = DeclareLaunchArgument(
+        "max_slew_rate",
+        default_value="170.0",
+        description="Maximum rate of change of commanded steering angle, in degrees/sec.",
+    )
 
     return LaunchDescription(
         [
             enable_deadman_arg,
+            enable_ttc_arg,
             use_fallback_follow_method,
             least_squares_degree,
             steering_gain,
@@ -78,6 +90,7 @@ def generate_launch_description():
             min_speed,
             hysteresis_alpha,
             speed_curve_scale,
+            max_slew_rate,
             # Launch gap_finder_node
             Node(
                 package="reactive",
@@ -101,13 +114,12 @@ def generate_launch_description():
                         "degree": LaunchConfiguration("least_squares_degree"),
                         "steering_gain": LaunchConfiguration("steering_gain"),
                         "k_samples": LaunchConfiguration("k_samples"),
-                        "max_steering_angle": LaunchConfiguration(
-                            "max_steering_angle"
-                        ),
+                        "max_steering_angle": LaunchConfiguration("max_steering_angle"),
                         "max_speed": LaunchConfiguration("max_speed"),
                         "min_speed": LaunchConfiguration("min_speed"),
                         "hysteresis_alpha": LaunchConfiguration("hysteresis_alpha"),
                         "speed_curve_scale": LaunchConfiguration("speed_curve_scale"),
+                        "max_slew_rate": LaunchConfiguration("max_slew_rate"),
                     }
                 ],
             ),
@@ -117,7 +129,12 @@ def generate_launch_description():
                 executable="safety_node",
                 name="safety_node",
                 output="screen",
-                parameters=[{"enable_deadman": LaunchConfiguration("enable_deadman")}],
+                parameters=[
+                    {
+                        "enable_deadman": LaunchConfiguration("enable_deadman"),
+                        "enable_ttc": LaunchConfiguration("enable_ttc"),
+                    }
+                ],
             ),
         ]
     )

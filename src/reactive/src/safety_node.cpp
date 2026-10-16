@@ -12,12 +12,14 @@ SafetyNode::SafetyNode() : Node("safety_node")
     this->declare_parameter("deadman_button", 4);
     this->declare_parameter("joy_timeout_sec", 0.5);
     this->declare_parameter("enable_deadman", true);
+    this->declare_parameter("enable_ttc", true);
     this->declare_parameter("max_ttc_angle_deg", 90.0);
 
     ttc_threshold_ = static_cast<float>(this->get_parameter("ttc_threshold").as_double());
     deadman_button_ = this->get_parameter("deadman_button").as_int();
     joy_timeout_sec_ = this->get_parameter("joy_timeout_sec").as_double();
     enable_deadman_ = this->get_parameter("enable_deadman").as_bool();
+    enable_ttc_ = this->get_parameter("enable_ttc").as_bool();
     max_ttc_angle_deg_ = this->get_parameter("max_ttc_angle_deg").as_double() * M_PI / 180.0;
 
     drive_pub_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("drive", 1);
@@ -65,6 +67,8 @@ void SafetyNode::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr
 {
     // TTC = r / (+rdot), where range rate is positive when getting closer
     estop_active_ = false;
+
+    if (!enable_ttc_) return;
 
     for (size_t i = 0; i < scan_msg->ranges.size(); ++i)
     {
