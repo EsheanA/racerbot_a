@@ -45,7 +45,7 @@ GapFollowNode::GapFollowNode() : Node("gap_follow_node")
 void GapFollowNode::gap_callback(const reactive::msg::Gap::ConstSharedPtr gap_msg)
 {
     int safety_publisher_count = this->deadman_sub_->get_publisher_count();
-    if ((enable_deadman_ && !deadman_engaged_) || safety_publisher_count == 0) {
+    if (enable_deadman_ && (!deadman_engaged_ || safety_publisher_count == 0)) {
         ackermann_msgs::msg::AckermannDriveStamped drive_msg;
         drive_msg.header.stamp = this->now();
         drive_msg.drive.steering_angle = commanded_steering_angle_;

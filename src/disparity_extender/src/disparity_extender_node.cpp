@@ -45,7 +45,7 @@ DisparityExtenderNode::DisparityExtenderNode() : Node("disparity_extender_node")
 void DisparityExtenderNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg)
 {
     int safety_publisher_count = this->deadman_sub_->get_publisher_count();
-    if ((enable_deadman_ && !deadman_engaged_) || safety_publisher_count == 0) {
+    if (enable_deadman_ && (!deadman_engaged_ || safety_publisher_count == 0)) {
         ackermann_msgs::msg::AckermannDriveStamped drive_msg;
         drive_msg.header.stamp = this->now();
         drive_msg.drive.speed = 0.0;
