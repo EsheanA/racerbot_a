@@ -155,22 +155,71 @@ void FollowTheGapNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSh
     if (best_idx == -1)
     {
         RCLCPP_WARN(this->get_logger(), "No valid gap found");
+        // Braking logic: if no gap, gently brake to a stop instead of instantly dying
+        current_speed_ = std::max(0.0f, current_speed_ - 0.2f); 
         return;
     }
 
     float steering_angle = scan_msg->angle_min + scan_msg->angle_increment * best_idx;
     float abs_angle = std::abs(steering_angle);
 
-    float speed;
-    if (abs_angle < 10.0 * M_PI / 180.0) speed = 2.0f;
-    else if (abs_angle < 20.0 * M_PI / 180.0) speed = 1.5f;
-    else speed = 0.5f;
+    // New speed stuff below this line (everything above is untouched)
+    float min_speed = 2.0f; // change max/min here
+    float max_speed = 5.0f;
+
+    // Addition 1: checking walls next to car
+    int center_idx = ranges.size() / 2; 
+    int idx_90_deg = (M_PI / 2.0) / scan_msg->angle_increment; // Number of LIDAR scans for 90 degrees. 
+    int left_idx = center_idx + idx_90_deg; // LIDAR index for 90 degrees left
+    int right_idx = center_idx - idx_90_deg; // LIDAR index for 90 degrees right 
+    
+    float left_dist = (left_idx < (static_cast<int>(scan_msg->ranges.size()))) ? scan_msg->ranges[left_idx] : max_lidar_range_; // checks distance for left_idx IF it is in the lidar array at the current moment.
+    float right_dist = (right_idx >= 0) ? scan_msg->ranges[right_idx] : max_lidar_range_; // checks distance for right_idx IF it is in the lidar array at the current moment.
+    
+
+
+    float speed_lateral = max_speed; // Set the default speed for car between walls as max speed.1
+    if (left_dist < (car_width_ / 1)  || right_dist < (car_width_ / 1) ) { // If the wall to the left or right side of the car is less than the car's width, slow down. (Can change this by changing (car_width_ / 1))
+        speed_lateral = min_speed; // Possibly make this a smoother function to dynamically change depending on distance to parallel walls?
+    }
+
+    // Addition 2: check if distnace in front of car is small, if so, slow down
+    float target_distance = ranges[best_idx];
+    float speed_forward = min_speed + (target_distance / max_lidar_range_) * (max_speed - min_speed); 
+    
+    // Addition 3: reduce speed depending on angle being turned. (NOT a piecewise funciton anymore, uses cos(x) to smooth out velocity changes.)
+   float speed_steer = max_speed; // set default speed to max if car is not turning by atleast 10 degrees
+    if (abs_angle >= (10 * (M_PI/180))){ // if turn requires more than 10 degrees (in radians), move speed to this speed.
+    speed_steer = 1.0 + (min_speed) * std::cos(abs_angle);
+    }
+
+    // Choosing the minimum speed out of all the different speed's depending on car's position. (also include max_speed in case of car is in a location with no block ahead, no turns or close walls.)
+    float target_speed = std::min({speed_lateral, speed_forward, speed_steer, max_speed});
+    
+    // Addition 5: acceleration system to smooth out car velocity (using another variable to increment up to the chosen target speed allows us to not have sudden jumps in speed.)
+    float max_accel_step = 0.1f; // change this to change acceleration.
+    if (target_speed > current_speed_ + max_accel_step) current_speed_ += max_accel_step;
+    else if (target_speed < current_speed_ - max_accel_step) current_speed_ -= max_accel_step;
+    else current_speed_ = target_speed;
+    
+    // ------------------------
 
     ackermann_msgs::msg::AckermannDriveStamped drive_msg;
     drive_msg.header.stamp = scan_msg->header.stamp;
     drive_msg.drive.steering_angle = steering_angle;
-    drive_msg.drive.speed = speed;
+    drive_msg.drive.speed = current_speed_; // publish smoothed out velocity
     drive_msg_publisher->publish(drive_msg);
+
+    // print the current speed and wall distances at most once every second (just for checking if all speeds are working.)
+    RCLCPP_INFO_THROTTLE(
+        this->get_logger(), 
+        *this->get_clock(), 
+        1000, 
+        "Speed: %.2f | Left : %.2f | Right : %.2f", 
+        current_speed_, left_dist, right_dist
+    );
+
+
 }
 
 int main(int argc, char **argv)

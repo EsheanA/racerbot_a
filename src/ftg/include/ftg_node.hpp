@@ -20,6 +20,7 @@ private:
     double fov_half_angle_;
     double car_width_;
     double minimum_gap_threshold_;
+    float current_speed_ = 0.0f;
 
     /// @brief clean lidar scan
     /// @param scan_msg The scan data from the lidar
