@@ -21,7 +21,6 @@ def generate_launch_description():
                 executable="ftg_node",
                 name="ftg_node",
                 output="screen",
-                remappings=[("drive", "drive_raw")],
                 parameters=[{"enable_deadman": LaunchConfiguration("enable_deadman")}],
             ),
         ]
