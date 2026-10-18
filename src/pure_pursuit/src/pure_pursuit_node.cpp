@@ -17,7 +17,7 @@ PurePursuit::PurePursuit() : Node("pure_pursuit_node")
     lookahead_base_ = declare_parameter<double>("lookahead_base", 1.0);
     lookahead_min_ = declare_parameter<double>("lookahead_min", 0.8);
     lookahead_max_ = declare_parameter<double>("lookahead_max", 3.0);
-    lookahead_speed_gain_ = declare_parameter<double>("lookahead_speed_gain", 0.3);
+    lookahead_speed_gain_ = declare_parameter<double>("lookahead_speed_gain", 0.1);
     wheel_base_ = declare_parameter<double>("wheelbase", 0.33);
     max_steering_ = declare_parameter<double>("max_steering", 0.4189);  // about 24 deg
     max_speed_    = declare_parameter<double>("max_speed", 4.0);
