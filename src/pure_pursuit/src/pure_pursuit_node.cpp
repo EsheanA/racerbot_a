@@ -12,13 +12,13 @@
 
 PurePursuit::PurePursuit() : Node("pure_pursuit_node")
 {
-    // ros2 parameters 
+    // ros2 parameters
     const auto track = declare_parameter<std::string>("track", "levine");
-    lookahead_ = declare_parameter<double>("lookahead", 1.5); // CHANGE LOOKAHEAD HERE
-
-    if (lookahead_ <= 0.0) {
-        throw std::runtime_error("Lookahead must be positive");
-    }
+    lookahead_base_ = declare_parameter<double>("lookahead_base", 1.0);
+    lookahead_min_ = declare_parameter<double>("lookahead_min", 0.8);
+    lookahead_max_ = declare_parameter<double>("lookahead_max", 3.0);
+    lookahead_speed_gain_ = declare_parameter<double>("lookahead_speed_gain", 0.3);
+    wheel_base_ = declare_parameter<double>("wheelbase", 0.33);
 
     // loading waypoints from the package share directory
     const std::string path =
@@ -69,6 +69,12 @@ void PurePursuit::load_waypoints(const std::string& path)
     }
 }
 
+double PurePursuit::currentLookahead(double v) const
+{
+    const double L = lookahead_base_ + lookahead_speed_gain_ * std::abs(v);
+    return std::clamp(L, lookahead_min_, lookahead_max_);
+}
+
 void PurePursuit::odom_callback(nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
     // current position and orientation of car
@@ -79,8 +85,12 @@ void PurePursuit::odom_callback(nav_msgs::msg::Odometry::ConstSharedPtr msg)
         2.0 * (q.w * q.z + q.x * q.y),
         1.0 - 2.0 * (q.y * q.y + q.z * q.z));
 
-    // finds the closest waypoint
-    if (!initialized_) {
+    // forward speed and speed-scaled lookahead
+    const double speed = msg->twist.twist.linear.x;
+    const double L = currentLookahead(speed);
+
+    // First odom msg finds the closest waypoint to give the last_goal_index_ to start finding the waypoint from
+    if (!initialized_) { // TODO: Handle when to reset
         double best_dist = std::numeric_limits<double>::infinity();
         for (size_t i = 0; i < waypoints_.size(); i++) {
             double dx = waypoints_[i].x - car_x;
@@ -95,18 +105,18 @@ void PurePursuit::odom_callback(nav_msgs::msg::Odometry::ConstSharedPtr msg)
     }
 
     // searching forward through the waypoints
-    for (size_t step = 0; step < waypoints_.size(); step++) {
+    for (size_t step = 0; step < waypoints_.size(); ++step) {
         size_t i = (last_goal_index_ + step) % waypoints_.size();
         double dx = waypoints_[i].x - car_x;
         double dy = waypoints_[i].y - car_y;
 
         // transforming world point to the car frame
-        double local_x = std::cos(yaw) * dx + std::sin(yaw) * dy;
-        double local_y = -std::sin(yaw) * dx + std::cos(yaw) * dy;
+        double local_x = std::cos(yaw) * dx + std::sin(yaw) * dy; // how far ahead of car
+        double local_y = -std::sin(yaw) * dx + std::cos(yaw) * dy; // how far to the left (positive) or right (negative)
         double distance = std::sqrt(dx * dx + dy * dy);
 
-        // waypoint must be INFRONT of the car and ATLEAST lookahead distance away.
-        if (local_x > 0.0 && distance >= lookahead_) {
+        // waypoint must be INFRONT of the car and ATLEAST L away.
+        if (local_x > 0.0 && distance >= L) { // TODO: Interpolate between 2 points possibly
             last_goal_index_ = i;
             RCLCPP_INFO_THROTTLE(
                 get_logger(), *get_clock(), 1000,
@@ -127,7 +137,7 @@ void PurePursuit::odom_callback(nav_msgs::msg::Odometry::ConstSharedPtr msg)
     }
 
     RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), 2000, "No suitable forward waypoint found");
+        get_logger(), *get_clock(), 2000, "No suitable forward waypoint found"); // TODO: Handle failure
 }
 
 int main(int argc, char **argv)
