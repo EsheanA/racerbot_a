@@ -25,6 +25,9 @@ private:
     double lookahead_speed_gain_;  // extra lookahead (m) per m/s of speed
     size_t last_goal_index_ = 0;   // index of last chosen goal
     double wheel_base_;            // front-to-rear axle distance (m)
+    double max_steering_;  // steering angle limit (rad)
+    double max_speed_;     // speed on straights (m/s)
+    double min_speed_;     // speed at full steering lock (m/s)
     bool initialized_ = false;     // false until first odom, then closest waypoint is found once
 
     /// @brief Loads the waypoint path from a file into waypoints_.
@@ -35,6 +38,12 @@ private:
     /// @param v Current forward speed of the car (m/s).
     /// @return Lookahead distance in meters.
     double currentLookahead(double v) const;
+
+    /// @brief Computes the pure pursuit steering angle and target speed for a goal
+    ///        point and publishes the drive command.
+    /// @param local_x Goal point distance ahead of the car (m), in the car frame.
+    /// @param local_y Goal point lateral offset (m), in the car frame. Positive is left.
+    void drive_to_goal(double local_x, double local_y);
 
     /// @brief Odometry callback: finds the goal waypoint at the current lookahead
     ///        distance in front of the car, and computes the pure pursuit steering.

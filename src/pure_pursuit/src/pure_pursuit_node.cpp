@@ -19,6 +19,9 @@ PurePursuit::PurePursuit() : Node("pure_pursuit_node")
     lookahead_max_ = declare_parameter<double>("lookahead_max", 3.0);
     lookahead_speed_gain_ = declare_parameter<double>("lookahead_speed_gain", 0.3);
     wheel_base_ = declare_parameter<double>("wheelbase", 0.33);
+    max_steering_ = declare_parameter<double>("max_steering", 0.4189);  // about 24 deg
+    max_speed_    = declare_parameter<double>("max_speed", 4.0);
+    min_speed_    = declare_parameter<double>("min_speed", 1.5);
 
     // loading waypoints from the package share directory
     const std::string path =
@@ -30,6 +33,8 @@ PurePursuit::PurePursuit() : Node("pure_pursuit_node")
     odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
         "/ego_racecar/odom", 10,
         std::bind(&PurePursuit::odom_callback, this, std::placeholders::_1));
+
+    drive_pub_ = create_publisher<
 
     RCLCPP_INFO(get_logger(), "Loaded %zu waypoints for %s", waypoints_.size(), track.c_str());
 }
@@ -73,6 +78,31 @@ double PurePursuit::currentLookahead(double v) const
 {
     const double L = lookahead_base_ + lookahead_speed_gain_ * std::abs(v);
     return std::clamp(L, lookahead_min_, lookahead_max_);
+}
+
+void PurePursuit::drive_to_goal(double local_x, double local_y)
+{
+    // pure pursuit: curvature of the arc to the goal point
+    // local_x^2 + local_y^2 is the squared distance to the goal, so this uses the
+    // actual distance to the waypoint rather than L
+    const double dist_sq = local_x * local_x + local_y * local_y;
+    const double curvature = 2.0 * local_y / dist_sq; // k = 2y/d^2
+
+    // bicycle model: curvature -> steering angle
+    double steering = std::atan(wheel_base_ * curvature);
+    steering = std::clamp(steering, -max_steering_, max_steering_);
+
+    // slow down in turns: max_speed_ when straight, min_speed_ at full lock
+    const double turn_ratio = std::abs(steering) / max_steering_;
+    const double target_speed =
+        max_speed_ - (max_speed_ - min_speed_) * turn_ratio;
+
+    ackermann_msgs::msg::AckermannDriveStamped drive;
+    drive.header.stamp = now();
+    drive.header.frame_id = "base_link";
+    drive.drive.steering_angle = steering;
+    drive.drive.speed = target_speed;
+    drive_pub_->publish(drive);
 }
 
 void PurePursuit::odom_callback(nav_msgs::msg::Odometry::ConstSharedPtr msg)
@@ -123,15 +153,8 @@ void PurePursuit::odom_callback(nav_msgs::msg::Odometry::ConstSharedPtr msg)
                 "Goal %zu: world(%.2f, %.2f) local(%.2f, %.2f)",
                 i, waypoints_[i].x, waypoints_[i].y, local_x, local_y);
 
-            /*
-             * Add curvature steering and speed calculations here!!
-             * (use local_x, local_y)
-             *
-             * 
-             * 
-             * 
-             * 
-             */
+            drive_to_goal(local_x, local_y);
+
             return;
         }
     }
