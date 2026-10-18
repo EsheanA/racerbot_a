@@ -30,11 +30,11 @@ PurePursuit::PurePursuit() : Node("pure_pursuit_node")
     load_waypoints(path);
 
     // localization
-    odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
+    odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "/ego_racecar/odom", 10,
         std::bind(&PurePursuit::odom_callback, this, std::placeholders::_1));
 
-    drive_pub_ = create_publisher<
+    drive_pub_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("drive", 10);
 
     RCLCPP_INFO(get_logger(), "Loaded %zu waypoints for %s", waypoints_.size(), track.c_str());
 }

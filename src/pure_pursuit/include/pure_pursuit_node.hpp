@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "nav_msgs/msg/odometry.hpp"
+#include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 struct Waypoint
@@ -18,6 +19,7 @@ public:
 
 private:
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
+    rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr drive_pub_;
     std::vector<Waypoint> waypoints_;
     double lookahead_base_;        // base lookahead L0 (m)
     double lookahead_min_;         // lower clamp (m)
