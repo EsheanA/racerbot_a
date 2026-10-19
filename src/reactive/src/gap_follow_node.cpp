@@ -10,9 +10,9 @@ GapFollowNode::GapFollowNode() : Node("gap_follow_node")
         "gap", 10,
         std::bind(&GapFollowNode::gap_callback, this, std::placeholders::_1));
     
-    deadman_sub_ = this->create_subscription<std_msgs::msg::Bool>(
-        "/safety/deadman", 10,
-        std::bind(&GapFollowNode::deadman_callback, this, std::placeholders::_1));
+    safety_brake_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+        "/safety/brake", 10,
+        std::bind(&GapFollowNode::safety_brake_callback, this, std::placeholders::_1));
 
     this->declare_parameter("use_fallback_method", false);
     this->declare_parameter("degree", 2);
@@ -24,12 +24,12 @@ GapFollowNode::GapFollowNode() : Node("gap_follow_node")
     this->declare_parameter("hysteresis_alpha", 0.3);
     this->declare_parameter("speed_curve_scale", 1.0);
     this->declare_parameter("max_slew_rate", 170.0);
-    this->declare_parameter("enable_deadman", true);
+    this->declare_parameter("enable_safety", true);
 
     use_fallback_method_ = this->get_parameter("use_fallback_method").as_bool();
     RCLCPP_INFO(this->get_logger(), "Using follow method: '%s'", use_fallback_method_ ? "drive_best_point" : "least_squares");
 
-    enable_deadman_ = this->get_parameter("enable_deadman").as_bool();
+    enable_safety_ = this->get_parameter("enable_safety").as_bool();
 
     degree_ = this->get_parameter("degree").as_int();
     steering_gain_ = this->get_parameter("steering_gain").as_double();
@@ -44,8 +44,8 @@ GapFollowNode::GapFollowNode() : Node("gap_follow_node")
 
 void GapFollowNode::gap_callback(const reactive::msg::Gap::ConstSharedPtr gap_msg)
 {
-    int safety_publisher_count = this->deadman_sub_->get_publisher_count();
-    if (enable_deadman_ && (!deadman_engaged_ || safety_publisher_count == 0)) {
+    int safety_publisher_count = this->safety_brake_sub_->get_publisher_count();
+    if (enable_safety_ && (safety_brake_engaged_ || safety_publisher_count == 0)) {
         ackermann_msgs::msg::AckermannDriveStamped drive_msg;
         drive_msg.header.stamp = this->now();
         drive_msg.drive.steering_angle = commanded_steering_angle_;
@@ -223,8 +223,8 @@ double GapFollowNode::angle_to_speed_function(double angle)
     return std::clamp(y, min_speed_, max_speed_);
 }
 
-void GapFollowNode::deadman_callback(const std_msgs::msg::Bool::ConstSharedPtr deadman_msg) {
-    deadman_engaged_ = deadman_msg->data;
+void GapFollowNode::safety_brake_callback(const std_msgs::msg::Bool::ConstSharedPtr safety_brake_msg) {
+    safety_brake_engaged_ = safety_brake_msg->data;
 }
 
 int main(int argc, char **argv)

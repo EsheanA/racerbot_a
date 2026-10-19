@@ -17,14 +17,14 @@ public:
 private:
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr drive_msg_publisher;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_subscriber;
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr deadman_sub_;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr safety_brake_sub_;
     double max_lidar_range_;
     double fov_half_angle_;
     double car_width_;
     double minimum_gap_threshold_;
-    bool enable_deadman_;
+    bool enable_safety_;
 
-    bool deadman_engaged_;
+    bool safety_brake_engaged_;
 
     /// @brief clean lidar scan
     /// @param scan_msg The scan data from the lidar
@@ -67,6 +67,6 @@ private:
     /// @param scan_msg The scan data from the lidar
     void lidar_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg);
 
-    /// @brief Runs everytime something is published to the deadman topic
-    void deadman_callback(const std_msgs::msg::Bool::ConstSharedPtr deadman_msg);
+    /// @brief Runs everytime something is published to the safety brake topic
+    void safety_brake_callback(const std_msgs::msg::Bool::ConstSharedPtr safety_brake_msg);
 };

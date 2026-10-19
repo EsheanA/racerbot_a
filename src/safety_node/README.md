@@ -8,5 +8,5 @@ colcon build --packages-select safety_node
 ros2 launch safety_node launch_safety.py
 ```
 
-## Topics
-- `/safety/deadman` (`std_msgs::msg::Bool`) Whether or not the deadman switch is held, meaning code should execute.
+## Topics Published
+- `/safety/brake` (`std_msgs::msg::Bool`) Whether or not the car should brake due to the deadman switch not being held/connected

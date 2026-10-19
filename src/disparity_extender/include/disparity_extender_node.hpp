@@ -15,7 +15,7 @@ public:
 private:
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr drive_pub_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_sub_;
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr deadman_sub_;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr safety_brake_sub_;
     
     float prev_steer_ = 0.0f;
     double max_lidar_range_;
@@ -29,9 +29,9 @@ private:
     double alpha_;
     double wheelbase_;
     double max_lateral_acc_;
-    bool enable_deadman_;
+    bool enable_safety_;
 
-    bool deadman_engaged_;
+    bool safety_brake_engaged_;
 
     /// @brief Callback invoked each time the lidar completes a new scan.
     /// @param scan_msg Shared pointer to the incoming LaserScan message.
@@ -71,6 +71,6 @@ private:
     /// @param steering_angle Steering angle toward the target point
     void drive_best_point(const float range, const float steering_angle);
 
-    /// @brief Runs everytime something is published to the deadman topic
-    void deadman_callback(const std_msgs::msg::Bool::ConstSharedPtr deadman_msg);
+    /// @brief Runs everytime something is published to the safety brake topic
+    void safety_brake_callback(const std_msgs::msg::Bool::ConstSharedPtr safety_brake_msg);
 };
