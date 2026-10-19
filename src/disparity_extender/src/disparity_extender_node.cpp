@@ -17,6 +17,7 @@ DisparityExtenderNode::DisparityExtenderNode() : Node("disparity_extender_node")
     this->declare_parameter("alpha", 0.8);
     this->declare_parameter("wheelbase", 0.33);
     this->declare_parameter("max_lateral_acc", 3.5);
+    this->declare_parameter("enable_safety", true);
 
     // Read into member variables
     max_lidar_range_ = this->get_parameter("max_lidar_range").as_double();
@@ -30,6 +31,7 @@ DisparityExtenderNode::DisparityExtenderNode() : Node("disparity_extender_node")
     alpha_ = this->get_parameter("alpha").as_double();
     wheelbase_ = this->get_parameter("wheelbase").as_double();
     max_lateral_acc_ = this->get_parameter("max_lateral_acc").as_double();
+    enable_safety_ = this->get_parameter("enable_safety").as_bool();
 
     drive_pub_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("drive", 10);
 
@@ -37,10 +39,22 @@ DisparityExtenderNode::DisparityExtenderNode() : Node("disparity_extender_node")
         "scan",
         10,
         std::bind(&DisparityExtenderNode::lidar_callback, this, std::placeholders::_1));
+    safety_brake_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+        "/safety/brake", 10,
+        std::bind(&DisparityExtenderNode::safety_brake_callback, this, std::placeholders::_1));
 }
 
 void DisparityExtenderNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg)
 {
+    int safety_publisher_count = this->safety_brake_sub_->get_publisher_count();
+    if (enable_safety_ && (safety_brake_engaged_ || safety_publisher_count == 0)) {
+        ackermann_msgs::msg::AckermannDriveStamped drive_msg;
+        drive_msg.header.stamp = this->now();
+        drive_msg.drive.speed = 0.0;
+        drive_pub_->publish(drive_msg);
+        return;
+    }
+
     auto ranges = preprocess_lidar(scan_msg);
     extend_obstacles(scan_msg, ranges);
     draw_safety_bubble(scan_msg, ranges);
@@ -237,6 +251,10 @@ void DisparityExtenderNode::drive_best_point(const float range, const float stee
     drive_msg.drive.steering_angle = steer;
     drive_msg.drive.speed = velocity;
     drive_pub_->publish(drive_msg);
+}
+
+void DisparityExtenderNode::safety_brake_callback(const std_msgs::msg::Bool::ConstSharedPtr safety_brake_msg) {
+    safety_brake_engaged_ = safety_brake_msg->data;
 }
 
 int main(int argc, char **argv)

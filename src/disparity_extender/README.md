@@ -21,7 +21,6 @@ ros2 launch disparity_extender disparity_extender_launch.py enable_deadman:=fals
 ```
 
 ## Safety Node
+Make sure to build and run the safety node before running this node, otherwise it will not work. See [Safety Node Readme](../safety_node/README.md) for more details.
 
-Disable the deadman gate with `enable_deadman:=false`.
-
-Disable TTC braking with `enable_ttc:=false`.
+If you are testing in the simulator, disable the deadman switch with `enable_deadman:=false`
