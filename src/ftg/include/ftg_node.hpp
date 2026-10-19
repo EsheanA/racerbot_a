@@ -20,6 +20,9 @@ private:
     double fov_half_angle_;
     double car_width_;
     double minimum_gap_threshold_;
+    double safety_bubble_scale_;
+    double prev_angle_adjuster_;
+    double prev_angle_;
 
     /// @brief clean lidar scan
     /// @param scan_msg The scan data from the lidar
