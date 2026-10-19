@@ -73,14 +73,11 @@ void FollowTheGapNode::draw_safety_bubble(const sensor_msgs::msg::LaserScan::Con
 
     // Draw safety bubble by calculating theta for the arc made by r = closest point with s = car width
 
-    // Adjust size of bubble based on how far the closest obstacle is from the car's facing direction
+    // Adjust size of bubble based on the angle between the closest obstacle and the car's facing direction
     double direction_adjustment = std::max((1 - 2 * std::abs((int)(closest_index - ranges.size())) / ((int)ranges.size())), 0);
 
     // Adjust based on distance
     double distance_adjustment = std::min((int)(0.1 / ranges[closest_index]), 1);
-
-    // direction_adjustment = 1;
-    // distance_adjustment = 1;
 
     double theta = 2.0 * std::atan2(car_width_ * safety_bubble_scale_ * std::max(direction_adjustment, distance_adjustment), ranges[closest_index]);
 
