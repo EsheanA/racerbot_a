@@ -11,11 +11,12 @@ find_package(ackermann_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 
 include_directories(include)
 
 add_executable(safety_node src/safety.cpp)
-ament_target_dependencies(safety_node rclcpp ackermann_msgs std_msgs sensor_msgs)
+ament_target_dependencies(safety_node rclcpp ackermann_msgs std_msgs sensor_msgs nav_msgs)
 
 # Install executables
 install(TARGETS

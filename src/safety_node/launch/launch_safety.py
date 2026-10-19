@@ -17,10 +17,17 @@ def generate_launch_description():
         description="How many milliseconds the node should wait for a /joy message before it assumes that no /joy is connected",
     )
 
+    enable_ttc = DeclareLaunchArgument(
+        "enable_ttc",
+        default_value="true",
+        description="Whether the ttc braking is enforced by safety_node",
+    )
+
     return LaunchDescription(
         [
             deadman_button,
             message_timeout_duration,
+            enable_ttc,
             Node(
                 package="safety_node",
                 executable="safety_node",
@@ -31,7 +38,8 @@ def generate_launch_description():
                     {
                         "message_timeout_duration": LaunchConfiguration(
                             "message_timeout_duration"
-                        )
+                        ),
+                        "enable_ttc": LaunchConfiguration("enable_ttc"),
                     },
                 ],
             ),
