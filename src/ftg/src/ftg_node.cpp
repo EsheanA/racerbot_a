@@ -12,12 +12,19 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node")
     this->declare_parameter("car_width", 0.4);
     this->declare_parameter("minimum_gap_threshold", 1.0);
     this->declare_parameter("enable_safety", true);
+    this->declare_parameter("safety_bubble_scale", 0.5);
+    this->declare_parameter("prev_angle_adjuster", 0.0);
+
 
     max_lidar_range_ = this->get_parameter("max_lidar_range").as_double();
     fov_half_angle_ = this->get_parameter("fov_half_angle_deg").as_double() * M_PI / 180.0;
     car_width_ = this->get_parameter("car_width").as_double();
     minimum_gap_threshold_ = this->get_parameter("minimum_gap_threshold").as_double();
     enable_safety_ = this->get_parameter("enable_safety").as_bool();
+    safety_bubble_scale_ = this->get_parameter("safety_bubble_scale").as_double();
+    prev_angle_adjuster_ = this->get_parameter("prev_angle_adjuster").as_double();
+
+    prev_angle_ = 0;
 
     this->drive_msg_publisher = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("drive", 10);
     this->laser_scan_subscriber = this->create_subscription<sensor_msgs::msg::LaserScan>(
@@ -70,9 +77,15 @@ void FollowTheGapNode::draw_safety_bubble(const sensor_msgs::msg::LaserScan::Con
 
     if (!found_closest) return; // handle case where all ranges are 0
 
-    // Draw safety buble by calculating theta for the arc made by r = closest point with s = car width
+    // Draw safety bubble by calculating theta for the arc made by r = closest point with s = car width
 
-    double theta = 2.0 * std::atan2(car_width_ / 2.0, ranges[closest_index]);
+    // Adjust size of bubble based on the angle between the closest obstacle and the car's facing direction
+    double direction_adjustment = std::max((1 - 2 * std::abs((int)(closest_index - ranges.size())) / ((int)ranges.size())), 0);
+
+    // Adjust based on distance
+    double distance_adjustment = std::min((int)(0.1 / ranges[closest_index]), 1);
+
+    double theta = 2.0 * std::atan2(car_width_ * safety_bubble_scale_ * std::max(direction_adjustment, distance_adjustment), ranges[closest_index]);
 
     size_t index_increment = (theta / scan_msg->angle_increment) / 2; // Used on each side so divide by 2
 
@@ -176,7 +189,12 @@ void FollowTheGapNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSh
         return;
     }
 
-    float steering_angle = scan_msg->angle_min + scan_msg->angle_increment * best_idx;
+    float current_angle = scan_msg->angle_min + scan_msg->angle_increment * best_idx;
+
+    // adjust angle based on previous
+    float steering_angle = prev_angle_ * prev_angle_adjuster_ + current_angle * (1 - prev_angle_adjuster_);
+    prev_angle_ = steering_angle;
+
     float abs_angle = std::abs(steering_angle);
 
     float speed;
