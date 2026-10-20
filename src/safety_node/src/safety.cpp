@@ -47,11 +47,8 @@ void SafetyNode::safety_update()
     joystick_active_ = false;
   }
 
-  if (!joystick_active_ || estop_active_ || !deadman_held_)
-  {
-    msg.data = true;
-    this->safety_brake_pub_->publish(msg);
-  }
+  msg.data = !joystick_active_ || estop_active_ || !deadman_held_;
+  this->safety_brake_pub_->publish(msg);
 }
 
 void SafetyNode::joy_callback(const sensor_msgs::msg::Joy::ConstSharedPtr joy_msg)
