@@ -6,16 +6,10 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    enable_deadman_arg = DeclareLaunchArgument(
-        "enable_deadman",
+    enable_safety_arg = DeclareLaunchArgument(
+        "enable_safety",
         default_value="true",
-        description="Whether the deadman button gate is enforced by safety_node",
-    )
-
-    enable_ttc_arg = DeclareLaunchArgument(
-        "enable_ttc",
-        default_value="true",
-        description="Whether the ttc braking is enforced by safety_node",
+        description="Whether the safety brake from the safety node is enabled",
     )
 
     use_fallback_follow_method = DeclareLaunchArgument(
@@ -79,8 +73,7 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            enable_deadman_arg,
-            enable_ttc_arg,
+            enable_safety_arg,
             use_fallback_follow_method,
             least_squares_degree,
             steering_gain,
@@ -97,7 +90,6 @@ def generate_launch_description():
                 executable="gap_finder_node",
                 name="gap_finder_node",
                 output="screen",
-                remappings=[("drive", "drive_raw")],
             ),
             # Launch gap_follower_node
             Node(
@@ -105,7 +97,6 @@ def generate_launch_description():
                 executable="gap_follow_node",
                 name="gap_follow_node",
                 output="screen",
-                remappings=[("drive", "drive_raw")],
                 parameters=[
                     {
                         "use_fallback_method": LaunchConfiguration(
@@ -120,19 +111,7 @@ def generate_launch_description():
                         "hysteresis_alpha": LaunchConfiguration("hysteresis_alpha"),
                         "speed_curve_scale": LaunchConfiguration("speed_curve_scale"),
                         "max_slew_rate": LaunchConfiguration("max_slew_rate"),
-                    }
-                ],
-            ),
-            # Launch safety_node
-            Node(
-                package="reactive",
-                executable="safety_node",
-                name="safety_node",
-                output="screen",
-                parameters=[
-                    {
-                        "enable_deadman": LaunchConfiguration("enable_deadman"),
-                        "enable_ttc": LaunchConfiguration("enable_ttc"),
+                        "enable_safety": LaunchConfiguration("enable_safety"),
                     }
                 ],
             ),

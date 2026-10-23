@@ -32,6 +32,7 @@ ros2 launch reactive reactive_launch.py enable_deadman:=false
 ros2 launch reactive reactive_launch.py enable_deadman:=false use_fallback_follow_method:=true
 ```
 
-## TTC braking
+## Safety Node
+Make sure to build and run the safety node before running this node, otherwise it will not work. See [Safety Node Readme](../safety_node/README.md) for more details.
 
-Disable TTC braking with `enable_ttc:=false`.
+If you are testing in the simulator, disable the deadman switch with `enable_deadman:=false`

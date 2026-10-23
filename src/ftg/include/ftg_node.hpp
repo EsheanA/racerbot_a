@@ -2,6 +2,7 @@
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include <vector>
 #include <cmath>
 #include <algorithm>
@@ -16,10 +17,16 @@ public:
 private:
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr drive_msg_publisher;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_subscriber;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr safety_brake_sub_;
     double max_lidar_range_;
     double fov_half_angle_;
     double car_width_;
     double minimum_gap_threshold_;
+    bool enable_safety_;
+    bool safety_brake_engaged_;
+    double safety_bubble_scale_;
+    double prev_angle_adjuster_;
+    double prev_angle_;
 
     /// @brief clean lidar scan
     /// @param scan_msg The scan data from the lidar
@@ -61,4 +68,7 @@ private:
     /// @brief func to be called when the lidar completes a scan
     /// @param scan_msg The scan data from the lidar
     void lidar_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg);
+
+    /// @brief Runs everytime something is published to the safety brake topic
+    void safety_brake_callback(const std_msgs::msg::Bool::ConstSharedPtr safety_brake_msg);
 };

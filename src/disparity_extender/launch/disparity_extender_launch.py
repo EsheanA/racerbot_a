@@ -6,41 +6,21 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    enable_deadman_arg = DeclareLaunchArgument(
-        "enable_deadman",
+    enable_safety_arg = DeclareLaunchArgument(
+        "enable_safety",
         default_value="true",
-        description="Whether the deadman button gate is enforced by safety_node",
-    )
-
-    enable_ttc_arg = DeclareLaunchArgument(
-        "enable_ttc",
-        default_value="true",
-        description="Whether the ttc braking is enforced by safety_node",
+        description="Whether the safety brake from the safety node is enabled",
     )
     return LaunchDescription(
         [
-            enable_deadman_arg,
-            enable_ttc_arg,
+            enable_safety_arg,
             # Launch disparity_extender_node
             Node(
                 package="disparity_extender",
                 executable="disparity_extender_node",
                 name="disparity_extender_node",
                 output="screen",
-                remappings=[("drive", "drive_raw")],
-            ),
-            # Launch safety_node
-            Node(
-                package="disparity_extender",
-                executable="safety_node",
-                name="safety_node",
-                output="screen",
-                parameters=[
-                    {
-                        "enable_deadman": LaunchConfiguration("enable_deadman"),
-                        "enable_ttc":  LaunchConfiguration("enable_ttc")
-                    }
-                ],
+                parameters=[{"enable_safety": LaunchConfiguration("enable_safety")}],
             ),
         ]
     )

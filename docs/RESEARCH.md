@@ -25,6 +25,13 @@ Contains notes and learnings from testing in simulation, on the car, and from le
   - Using exact value instead of linear approximation is good.
   - Overall, good to avoid crashing into corners.
 
+    - Can cause the car to snake much more when driving down wider corridors.
+        - Current Solution: Decrease safety bubble size on obstacles the car is unlikely to hit.
+        - Current Implementation:
+            - Decrease the size of the bubble if the obstacle is away from the car's facing direction and not very close to the car.
+            - Parameters have not been tested thoroughly yet.
+            - Snaking still occurs without the safety bubble
+
 - Finding Gap
   - We choose widest gap: Backfires when a wide but shallow gap wins over a narrower, deeper one, steering us toward a dead end.
   - We choose width\*depth gap: Solid.
@@ -32,7 +39,8 @@ Contains notes and learnings from testing in simulation, on the car, and from le
   - We choose center of widest gap: Solid.
 
 - Steering
-  - Go to best point: Car oversteers, as it chooses a new point each time.
+    - Go to best point: Car oversteers, as it chooses a new point each time.
+    - Smoothing the steering with a low-pass filter seems to have very little effect.
 
 - Speed
   - Slower speeds generally crash less and are closer to matching real life vs. simulation.
