@@ -83,7 +83,7 @@ void FollowTheGapNode::draw_safety_bubble(const sensor_msgs::msg::LaserScan::Con
     double direction_adjustment = std::max((1 - 2 * std::abs((int)(closest_index - ranges.size())) / ((int)ranges.size())), 0);
 
     // Adjust based on distance
-    double distance_adjustment = std::min((int)(0.1 / ranges[closest_index]), 1);
+    double distance_adjustment = std::min((0.1 / ranges[closest_index]), 1.0);
 
     double theta = 2.0 * std::atan2(car_width_ * safety_bubble_scale_ * std::max(direction_adjustment, distance_adjustment), ranges[closest_index]);
 
@@ -103,9 +103,13 @@ vector<std::pair<int, int>> FollowTheGapNode::find_all_gaps(const vector<float>&
     vector<std::pair<int, int>> gaps;
     size_t i = 0;
 
-    float threshold_modifier = ranges[ranges.size() / 4];
+    // float threshold_modifier = std::max(ranges[ranges.size() * 0.25], ranges[ranges.size() * 0.75]);
 
-    float gap_threshold = std::max((float)minimum_gap_threshold_,threshold_modifier);
+    vector<float> ranges_copy = vector<float>(ranges);
+
+    std::sort(ranges_copy.begin(),ranges_copy.end());
+
+    float gap_threshold = std::max((float)minimum_gap_threshold_,ranges_copy[ranges.size() / 2]);
     
     while (i < ranges.size()) {
         if (ranges[i] <= gap_threshold) { 
