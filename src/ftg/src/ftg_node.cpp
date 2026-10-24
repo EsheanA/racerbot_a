@@ -102,15 +102,19 @@ vector<std::pair<int, int>> FollowTheGapNode::find_all_gaps(const vector<float>&
 {
     vector<std::pair<int, int>> gaps;
     size_t i = 0;
+
+    float threshold_modifier = ranges[ranges.size() / 4];
+
+    float gap_threshold = std::max((float)minimum_gap_threshold_,threshold_modifier);
     
     while (i < ranges.size()) {
-        if (ranges[i] <= minimum_gap_threshold_) { 
+        if (ranges[i] <= gap_threshold) { 
             ++i; 
             continue; 
         }
 
         size_t gap_start = i;
-        while (i < ranges.size() && ranges[i] > minimum_gap_threshold_) {
+        while (i < ranges.size() && ranges[i] > gap_threshold) {
             ++i;
         }
         size_t gap_end = i;
