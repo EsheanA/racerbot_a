@@ -25,7 +25,7 @@ export SIM_CONFIG="/racerbot_ws/src/racerbot_a/test/sim_tests/config/levine.yaml
 
 #run tests
 colcon test --packages-select sim_tests \
+ --return-code-on-test-failure \
  --event-handlers console_direct+
-
 
 colcon test-result --verbose
