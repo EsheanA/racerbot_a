@@ -94,12 +94,12 @@ vector<float> FollowTheGapNode::preprocess_lidar(
 void FollowTheGapNode::draw_safety_bubble(
     const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg,
     vector<float> &ranges) {
-  // Find closest obstacle (ignoring 0 ranges since 0 will already be avoided)
+  // Find closest obstacle
   bool found_closest = false;
   size_t closest_index;
   for (size_t i = 1; i < ranges.size(); ++i) {
     if (ranges[i] == 0) {
-      continue;
+      continue; //ignore 0s
     }
 
     // only bubble stuff we could actually hit
@@ -277,7 +277,7 @@ void FollowTheGapNode::lidar_callback(
   // --- Angle-based factor ---
   double max_angle =
       11.0 * M_PI / 180.0; // angle at/beyond which speed hits its minimum
-  double min_angle_speed = 0.6;
+  double min_angle_speed = 0.5;
   double max_angle_speed = 4.0;
 
   double t_angle = std::clamp(abs_angle / max_angle, 0.0, 1.0);
