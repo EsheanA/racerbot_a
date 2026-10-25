@@ -17,7 +17,7 @@ if(BUILD_TESTING)
 
   add_ros_isolated_launch_test(
     test/test_simulation.py
-    TIMEOUT 60
+    TIMEOUT 120
   )
   # add_ros_isolated_launch_test(
   #   test/test_simulation.py

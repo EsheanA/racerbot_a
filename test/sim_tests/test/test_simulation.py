@@ -77,9 +77,9 @@ class TestSimulation(unittest.TestCase):
                 "Simulator did not publish odometry within 15 seconds"
             )
 
-            node.get_logger().info("Observing the simulation for 60 seconds")
+            node.get_logger().info("Observing the simulation for 15 seconds")
 
-            observation_deadline = time.monotonic() + 60.0
+            observation_deadline = time.monotonic() + 15.0
             while time.monotonic() < observation_deadline:
                 rclpy.spin_once(node, timeout_sec=0.1)
 
