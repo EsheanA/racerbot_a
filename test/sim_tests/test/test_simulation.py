@@ -19,6 +19,7 @@ def generate_test_description():
         get_package_share_directory("f1tenth_gym_ros")
     )
 
+
     ALGORITHM_PACKAGE = os.environ["ALGORITHM_PACKAGE"]
     ALGORITHM_EXECUTABLE = os.environ["ALGORITHM_EXECUTABLE"]
     config_path = os.environ["SIM_CONFIG"]
@@ -29,7 +30,7 @@ def generate_test_description():
         ),
         launch_arguments={
             "config": config_path,
-            "open_foxglove": "false",
+            "open_foxglove": "true",
             "num_agent": "1",
         }.items(),
     )
@@ -38,6 +39,7 @@ def generate_test_description():
         package=ALGORITHM_PACKAGE,
         executable=ALGORITHM_EXECUTABLE,
         output="screen",
+        parameters=[{"enable_safety": False}]
     )
     return launch.LaunchDescription([
         simulator,
@@ -70,13 +72,16 @@ class TestSimulation(unittest.TestCase):
             while time.monotonic() < deadline:
                 rclpy.spin_once(node, timeout_sec=0.1)
 
-                if received_messages:
-                    break
-
             self.assertTrue(
                 received_messages,
                 "Simulator did not publish odometry within 15 seconds"
             )
+
+            node.get_logger().info("Observing the simulation for 60 seconds")
+
+            observation_deadline = time.monotonic() + 60.0
+            while time.monotonic() < observation_deadline:
+                rclpy.spin_once(node, timeout_sec=0.1)
 
         finally:
             node.destroy_node()
