@@ -9,7 +9,7 @@ GapFollowNode::GapFollowNode() : Node("gap_follow_node")
     gap_sub_ = this->create_subscription<reactive::msg::Gap>(
         "gap", 10,
         std::bind(&GapFollowNode::gap_callback, this, std::placeholders::_1));
-    
+
     safety_brake_sub_ = this->create_subscription<std_msgs::msg::Bool>(
         "/safety/brake", 10,
         std::bind(&GapFollowNode::safety_brake_callback, this, std::placeholders::_1));
@@ -45,7 +45,8 @@ GapFollowNode::GapFollowNode() : Node("gap_follow_node")
 void GapFollowNode::gap_callback(const reactive::msg::Gap::ConstSharedPtr gap_msg)
 {
     int safety_publisher_count = this->safety_brake_sub_->get_publisher_count();
-    if (enable_safety_ && (safety_brake_engaged_ || safety_publisher_count == 0)) {
+    if (enable_safety_ && (safety_brake_engaged_ || safety_publisher_count == 0))
+    {
         ackermann_msgs::msg::AckermannDriveStamped drive_msg;
         drive_msg.header.stamp = this->now();
         drive_msg.drive.steering_angle = commanded_steering_angle_;
@@ -148,7 +149,6 @@ void GapFollowNode::least_squares_pathfinding(const reactive::msg::Gap::ConstSha
     commanded_steering_angle_ = std::clamp(commanded_steering_angle_ + delta, -max_steering_angle_, max_steering_angle_);
 
     double velocity = angle_to_speed_function(filtered_steering_angle_);
-    commanded_steering_angle_ = steering_gain_ * filtered_steering_angle_;
 
     ackermann_msgs::msg::AckermannDriveStamped drive_msg;
     drive_msg.header.stamp = this->now();
@@ -201,7 +201,8 @@ double GapFollowNode::compute_steering_angle(Eigen::VectorXd coefficients, Eigen
     {
         double t = theta_min + (theta_max - theta_min) * i / k_samples_;
         double predicted_r = get_curve_output(t, coefficients);
-        if (predicted_r >= max_lookahead) continue;
+        if (predicted_r >= max_lookahead)
+            continue;
 
         if (predicted_r > best_range)
         {
@@ -223,7 +224,8 @@ double GapFollowNode::angle_to_speed_function(double angle)
     return std::clamp(y, min_speed_, max_speed_);
 }
 
-void GapFollowNode::safety_brake_callback(const std_msgs::msg::Bool::ConstSharedPtr safety_brake_msg) {
+void GapFollowNode::safety_brake_callback(const std_msgs::msg::Bool::ConstSharedPtr safety_brake_msg)
+{
     safety_brake_engaged_ = safety_brake_msg->data;
 }
 
