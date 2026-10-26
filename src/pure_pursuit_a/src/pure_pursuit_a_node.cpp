@@ -13,6 +13,7 @@
 PurePursuit::PurePursuit() : Node("pure_pursuit_a_node")
 {
     // ROS2 parameters
+    this->declare_parameter("enable_safety", true);
     this->declare_parameter("track", "levine");
     this->declare_parameter("lookahead_base", 1.0);
     this->declare_parameter("lookahead_min", 0.8);
@@ -23,6 +24,7 @@ PurePursuit::PurePursuit() : Node("pure_pursuit_a_node")
     this->declare_parameter("max_speed", 4.0);
     this->declare_parameter("min_speed", 1.5);
 
+    enable_safety_ = this->get_parameter("enable_safety").as_bool();
     const std::string track = this->get_parameter("track").as_string();
     lookahead_base_ = this->get_parameter("lookahead_base").as_double();
     lookahead_min_ = this->get_parameter("lookahead_min").as_double();
@@ -32,6 +34,11 @@ PurePursuit::PurePursuit() : Node("pure_pursuit_a_node")
     max_steering_ = this->get_parameter("max_steering").as_double();
     max_speed_ = this->get_parameter("max_speed").as_double();
     min_speed_ = this->get_parameter("min_speed").as_double();
+
+    // Safety
+    safety_brake_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+        "/safety/brake", 10,
+        std::bind(&PurePursuit::safety_brake_callback, this, std::placeholders::_1));
 
     // loading waypoints from the package share directory
     const std::string path =
@@ -47,6 +54,10 @@ PurePursuit::PurePursuit() : Node("pure_pursuit_a_node")
     drive_pub_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("drive", 10);
 
     RCLCPP_INFO(get_logger(), "Loaded %zu waypoints for %s", waypoints_.size(), track.c_str());
+}
+
+void PurePursuit::safety_brake_callback(const std_msgs::msg::Bool::ConstSharedPtr safety_brake_msg) {
+    safety_brake_engaged_ = safety_brake_msg->data;
 }
 
 void PurePursuit::load_waypoints(const std::string& path)
@@ -117,6 +128,16 @@ void PurePursuit::drive_to_goal(double local_x, double local_y)
 
 void PurePursuit::odom_callback(nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
+
+    int safety_publisher_count = this->safety_brake_sub_->get_publisher_count();
+    if (enable_safety_ && (safety_brake_engaged_ || safety_publisher_count == 0)) {
+        ackermann_msgs::msg::AckermannDriveStamped drive_msg;
+        drive_msg.header.stamp = this->now();
+        drive_msg.drive.speed = 0.0;
+        drive_pub_->publish(drive_msg);
+        return;
+    }
+
     // current position and orientation of car
     double car_x = msg->pose.pose.position.x;
     double car_y = msg->pose.pose.position.y;

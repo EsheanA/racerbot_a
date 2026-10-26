@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(ackermann_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_executable(pure_pursuit_a_node src/pure_pursuit_a_node.cpp)
 target_compile_features(pure_pursuit_a_node PRIVATE cxx_std_14)
@@ -19,6 +20,10 @@ ament_target_dependencies(pure_pursuit_a_node rclcpp nav_msgs ackermann_msgs ame
 
 install(TARGETS pure_pursuit_a_node DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY waypoints DESTINATION share/${PROJECT_NAME})
+install(
+  DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
