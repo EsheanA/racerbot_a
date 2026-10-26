@@ -277,7 +277,7 @@ void FollowTheGapNode::lidar_callback(
 
   // --- Angle-based factor ---
   double max_angle =
-      15.0 * M_PI / 180.0; // angle at/beyond which speed hits its minimum
+      14.0 * M_PI / 180.0; // angle at/beyond which speed hits its minimum
   double min_angle_speed = 0.3;
   double max_angle_speed = 6.0;
 
