@@ -15,11 +15,11 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node") {
   this->declare_parameter("minimum_gap_threshold", 1.0);
   this->declare_parameter("enable_safety", true);
   this->declare_parameter("safety_bubble_scale", 0.5);
-  this->declare_parameter("prev_angle_adjuster", 0.9); //scale weight of prev angle when smoothing
+  this->declare_parameter("prev_angle_adjuster", 0.6); //scale weight of prev angle when smoothing
   this->declare_parameter("bubble_lookahead", 3.0);
   this->declare_parameter("bubble_half_width", 0.45);
   this->declare_parameter("wheelbase", 0.33);
-  this->declare_parameter("lookahead_max", 2.0);
+  this->declare_parameter("lookahead_max", 1.8);
   this->declare_parameter("steering_deadzone",0.7);
 
   max_lidar_range_ = this->get_parameter("max_lidar_range").as_double();
@@ -277,8 +277,8 @@ void FollowTheGapNode::lidar_callback(
 
   // --- Angle-based factor ---
   double max_angle =
-      14.0 * M_PI / 180.0; // angle at/beyond which speed hits its minimum
-  double min_angle_speed = 0.5;
+      15.0 * M_PI / 180.0; // angle at/beyond which speed hits its minimum
+  double min_angle_speed = 0.3;
   double max_angle_speed = 6.0;
 
   double t_angle = std::clamp(abs_angle / max_angle, 0.0, 1.0);
@@ -287,8 +287,8 @@ void FollowTheGapNode::lidar_callback(
 
   // --- Range-based factor ---
   double min_range = 0.5; // range at/below which speed hits its minimum
-  double max_range = 6.0; // range at/above which speed hits its maximum
-  double min_range_speed = 0.5;
+  double max_range = 5.0; // range at/above which speed hits its maximum
+  double min_range_speed = 0.3;
   double max_range_speed = 6.0;
 
   double t_range = std::clamp(
