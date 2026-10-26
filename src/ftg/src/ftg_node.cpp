@@ -103,6 +103,7 @@ void FollowTheGapNode::draw_safety_bubble(
     }
 
     // only bubble stuff we could actually hit
+    // We're making a box of sorts and just bubbling in it
     float angle = scan_msg->angle_min + scan_msg->angle_increment * i;
     float ahead = ranges[i] * std::cos(angle);
     float beside = ranges[i] * std::sin(angle);
@@ -276,9 +277,9 @@ void FollowTheGapNode::lidar_callback(
 
   // --- Angle-based factor ---
   double max_angle =
-      11.0 * M_PI / 180.0; // angle at/beyond which speed hits its minimum
+      14.0 * M_PI / 180.0; // angle at/beyond which speed hits its minimum
   double min_angle_speed = 0.5;
-  double max_angle_speed = 4.0;
+  double max_angle_speed = 6.0;
 
   double t_angle = std::clamp(abs_angle / max_angle, 0.0, 1.0);
   double angle_speed =
@@ -286,9 +287,9 @@ void FollowTheGapNode::lidar_callback(
 
   // --- Range-based factor ---
   double min_range = 0.5; // range at/below which speed hits its minimum
-  double max_range = 4.0; // range at/above which speed hits its maximum
+  double max_range = 6.0; // range at/above which speed hits its maximum
   double min_range_speed = 0.5;
-  double max_range_speed = 4.0;
+  double max_range_speed = 6.0;
 
   double t_range = std::clamp(
       (target_range - min_range) / (max_range - min_range), 0.0, 1.0);
@@ -296,7 +297,7 @@ void FollowTheGapNode::lidar_callback(
       min_range_speed + t_range * (max_range_speed - min_range_speed);
 
   // --- Combine: take the more conservative (lower) of the two ---
-  speed = static_cast<float>(std::min(angle_speed, range_speed) * 1.2);
+  speed = static_cast<float>(std::min(angle_speed, range_speed) * 1.1);
 
   ackermann_msgs::msg::AckermannDriveStamped drive_msg;
   drive_msg.header.stamp = scan_msg->header.stamp;
