@@ -15,7 +15,7 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node") {
   this->declare_parameter("minimum_gap_threshold", 1.0);
   this->declare_parameter("enable_safety", true);
   this->declare_parameter("safety_bubble_scale", 0.5);
-  this->declare_parameter("prev_angle_adjuster", 0.9);
+  this->declare_parameter("prev_angle_adjuster", 0.9); //scale weight of prev angle when smoothing
   this->declare_parameter("bubble_lookahead", 3.0);
   this->declare_parameter("bubble_half_width", 0.45);
   this->declare_parameter("wheelbase", 0.33);
