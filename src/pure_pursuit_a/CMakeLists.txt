@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(pure_pursuit)
+project(pure_pursuit_a)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -12,12 +12,12 @@ find_package(nav_msgs REQUIRED)
 find_package(ackermann_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 
-add_executable(pure_pursuit_node src/pure_pursuit_node.cpp)
-target_compile_features(pure_pursuit_node PRIVATE cxx_std_14)
-target_include_directories(pure_pursuit_node PRIVATE include)
-ament_target_dependencies(pure_pursuit_node rclcpp nav_msgs ackermann_msgs ament_index_cpp)
+add_executable(pure_pursuit_a_node src/pure_pursuit_a_node.cpp)
+target_compile_features(pure_pursuit_a_node PRIVATE cxx_std_14)
+target_include_directories(pure_pursuit_a_node PRIVATE include)
+ament_target_dependencies(pure_pursuit_a_node rclcpp nav_msgs ackermann_msgs ament_index_cpp)
 
-install(TARGETS pure_pursuit_node DESTINATION lib/${PROJECT_NAME})
+install(TARGETS pure_pursuit_a_node DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY waypoints DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)

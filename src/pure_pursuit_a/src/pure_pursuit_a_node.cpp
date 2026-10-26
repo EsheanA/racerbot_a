@@ -1,4 +1,4 @@
-#include "pure_pursuit_node.hpp"
+#include "pure_pursuit_a_node.hpp"
 
 #include <cmath>
 #include <fstream>
@@ -10,22 +10,32 @@
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
 
-PurePursuit::PurePursuit() : Node("pure_pursuit_node")
+PurePursuit::PurePursuit() : Node("pure_pursuit_a_node")
 {
-    // ros2 parameters
-    const auto track = declare_parameter<std::string>("track", "levine");
-    lookahead_base_ = declare_parameter<double>("lookahead_base", 1.0);
-    lookahead_min_ = declare_parameter<double>("lookahead_min", 0.8);
-    lookahead_max_ = declare_parameter<double>("lookahead_max", 3.0);
-    lookahead_speed_gain_ = declare_parameter<double>("lookahead_speed_gain", 0.1);
-    wheel_base_ = declare_parameter<double>("wheelbase", 0.33);
-    max_steering_ = declare_parameter<double>("max_steering", 0.4189);  // about 24 deg
-    max_speed_    = declare_parameter<double>("max_speed", 4.0);
-    min_speed_    = declare_parameter<double>("min_speed", 1.5);
+    // ROS2 parameters
+    this->declare_parameter("track", "levine");
+    this->declare_parameter("lookahead_base", 1.0);
+    this->declare_parameter("lookahead_min", 0.8);
+    this->declare_parameter("lookahead_max", 3.0);
+    this->declare_parameter("lookahead_speed_gain", 0.1);
+    this->declare_parameter("wheelbase", 0.33);
+    this->declare_parameter("max_steering", 0.4189);  // about 24 deg
+    this->declare_parameter("max_speed", 4.0);
+    this->declare_parameter("min_speed", 1.5);
+
+    const std::string track = this->get_parameter("track").as_string();
+    lookahead_base_ = this->get_parameter("lookahead_base").as_double();
+    lookahead_min_ = this->get_parameter("lookahead_min").as_double();
+    lookahead_max_ = this->get_parameter("lookahead_max").as_double();
+    lookahead_speed_gain_ = this->get_parameter("lookahead_speed_gain").as_double();
+    wheel_base_ = this->get_parameter("wheelbase").as_double();
+    max_steering_ = this->get_parameter("max_steering").as_double();
+    max_speed_ = this->get_parameter("max_speed").as_double();
+    min_speed_ = this->get_parameter("min_speed").as_double();
 
     // loading waypoints from the package share directory
     const std::string path =
-        ament_index_cpp::get_package_share_directory("pure_pursuit") +
+        ament_index_cpp::get_package_share_directory("pure_pursuit_a") +
         "/waypoints/" + track + ".csv";
     load_waypoints(path);
 
