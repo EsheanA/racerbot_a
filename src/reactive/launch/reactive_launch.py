@@ -1,6 +1,6 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, IfElseSubstitution
 from launch_ros.actions import Node
 
 
@@ -71,6 +71,18 @@ def generate_launch_description():
         description="Maximum rate of change of commanded steering angle, in degrees/sec.",
     )
 
+    opponent_car = LaunchConfiguration("opponent_car")
+
+    opponent_car_arg = DeclareLaunchArgument(
+        "opponent_car",
+        default_value="false",
+        choices=["true", "false"],
+        description="If true, remap /drive -> /opp_drive and /scan -> /opp_scan",
+    )
+
+    drive_topic = IfElseSubstitution(opponent_car, "/opp_drive", "/drive")
+    scan_topic = IfElseSubstitution(opponent_car, "/opp_scan", "/scan")
+
     return LaunchDescription(
         [
             enable_safety_arg,
@@ -84,12 +96,14 @@ def generate_launch_description():
             hysteresis_alpha,
             speed_curve_scale,
             max_slew_rate,
+            opponent_car_arg,
             # Launch gap_finder_node
             Node(
                 package="reactive",
                 executable="gap_finder_node",
                 name="gap_finder_node",
                 output="screen",
+                remappings=[("/drive", drive_topic), ("/scan", scan_topic)],
             ),
             # Launch gap_follower_node
             Node(
@@ -114,6 +128,7 @@ def generate_launch_description():
                         "enable_safety": LaunchConfiguration("enable_safety"),
                     }
                 ],
+                remappings=[("/drive", drive_topic), ("/scan", scan_topic)],
             ),
         ]
     )
