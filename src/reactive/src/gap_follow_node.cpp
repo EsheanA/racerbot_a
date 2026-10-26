@@ -67,23 +67,12 @@ void GapFollowNode::gap_callback(const reactive::msg::Gap::ConstSharedPtr gap_ms
 
 void GapFollowNode::drive_best_point(const reactive::msg::Gap::ConstSharedPtr gap_msg)
 {
-    /* Slower speed at small range
-    double min_range = 0.5;
-    double max_range = 4.0;
-
-    double t = (target_range - min_range) / (max_range - min_range);
-    t = std::clamp(t, 0.0, 1.0);
-
-    velocity = static_cast<float>(min_speed_ + (t * t) * (max_speed_ - min_speed_));
-    */
-
-    double velocity = angle_to_speed_function(gap_msg->target_angle);
 
     // Publishing to drive
     ackermann_msgs::msg::AckermannDriveStamped drive_msg;
     drive_msg.header.stamp = this->now();
     drive_msg.drive.steering_angle = gap_msg->target_angle;
-    drive_msg.drive.speed = velocity;
+    drive_msg.drive.speed = get_combined_speed(gap_msg->target_angle, gap_msg->target_range);
     drive_pub_->publish(drive_msg);
 }
 
@@ -132,13 +121,10 @@ void GapFollowNode::least_squares_pathfinding(const reactive::msg::Gap::ConstSha
     double delta = std::clamp(filtered_steering_angle_ - commanded_steering_angle_, -max_delta, max_delta);
     commanded_steering_angle_ = std::clamp(commanded_steering_angle_ + delta, -max_steering_angle_, max_steering_angle_);
 
-    double velocity = angle_to_speed_function(filtered_steering_angle_);
-    commanded_steering_angle_ = steering_gain_ * filtered_steering_angle_;
-
     ackermann_msgs::msg::AckermannDriveStamped drive_msg;
     drive_msg.header.stamp = this->now();
     drive_msg.drive.steering_angle = commanded_steering_angle_;
-    drive_msg.drive.speed = velocity;
+    drive_msg.drive.speed = get_combined_speed(commanded_steering_angle_, gap_msg->target_range);
     drive_pub_->publish(drive_msg);
 }
 
@@ -207,6 +193,29 @@ double GapFollowNode::angle_to_speed_function(double angle)
 
     double y = speed_curve_scale_ * (a * std::log(std::abs(angle) + b) + c); // current formula from Desmos tinkering <https://www.desmos.com/calculator/yeyvbi21nf>
     return std::clamp(y, min_speed_, max_speed_);
+}
+
+double GapFollowNode::range_to_speed_function(double range)
+{
+    const double min_range = 0.5;
+    const double max_range = 5.0;
+
+    range = std::clamp(range, min_range, max_range);
+
+    const double a = 0.0;
+    const double b = 0.0;
+    const double c = 0.0;
+
+    double y = speed_curve_scale_ * (a * std::log(range + b) + c);
+    return std::clamp(y, min_speed_, max_speed_);
+}
+
+double GapFollowNode::get_combined_speed(double angle, double range)
+{
+    double angle_speed = angle_to_speed_function(angle);
+    double range_speed = range_to_speed_function(range);
+
+    return std::min(angle_speed, range_speed);
 }
 
 void GapFollowNode::safety_brake_callback(const std_msgs::msg::Bool::ConstSharedPtr safety_brake_msg)

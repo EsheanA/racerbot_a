@@ -39,7 +39,6 @@ private:
 
     bool safety_brake_engaged_ = false;
 
-
     /// @brief Callback invoked each time we find a valid gap from the laser scan.
     /// @param gap_msg Shared pointer to the incoming Gap message.
     void gap_callback(const reactive::msg::Gap::ConstSharedPtr gap_msg);
@@ -75,6 +74,17 @@ private:
     /// @param angle The target angle
     /// @return The speed the car should drive at
     double angle_to_speed_function(double angle);
+
+    /// @brief The mathematical function that determines the car's speed based on the target_range
+    /// @param range The target range
+    /// @return The speed the car should drive at
+    double range_to_speed_function(double range);
+
+    /// @brief Calls both angle_to_speed and range_to_speed, returns the lowest one
+    /// @param angle The target angle
+    /// @param range The target range
+    /// @return The speed the car should drive at
+    double get_combined_speed(double angle, double range);
 
     /// @brief Runs everytime something is published to the safety brake topic
     void safety_brake_callback(const std_msgs::msg::Bool::ConstSharedPtr safety_brake_msg);
