@@ -25,13 +25,13 @@ private:
     bool enable_safety_;
     bool safety_brake_engaged_;
     double safety_bubble_scale_;
-    double prev_angle_adjuster_;
+    double prev_angle_adjuster_;  // scale weight of prev angle when smoothing
     double prev_angle_;
     double bubble_lookahead_;     // how far ahead an obj can be and get a bubble
     double bubble_half_width_;    // how far either side of the car's centreline a obj can be and get bubble
-    double wheelbase_;            // distance between front and rear axles (for steering so we can make it more smooth)
-    double lookahead_max_;        // cap on the target distance used for steering 
-    double steering_deadzone_; // STOP THE WOBBLE!!!!!!
+    double wheelbase_;            // distance between front and rear axles
+    double lookahead_max_;        // cap on the target distance used for steering
+    double steering_deadzone_;    // steering angles below this (rad) are zeroed to stop wobble
 
     /// @brief clean lidar scan
     /// @param scan_msg The scan data from the lidar
@@ -41,17 +41,15 @@ private:
     /// @brief extend obstacles outward to account for car width
     /// @param scan_msg the scan data from the lidar
     /// @param ranges preprocessed range vector to modify in place
-    void extend_obstacles(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg,
-        vector<float>& ranges);
+    void extend_obstacles(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg, vector<float>& ranges);
 
     /// @brief creates a safety bubble around closest obstacle
     /// @param ranges preprocessed range vector to modify in place
     /// @param scan_msg the scan data from the lidar
-    void draw_safety_bubble(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg, 
-                        std::vector<float>& ranges);
+    void draw_safety_bubble(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg, std::vector<float>& ranges);
 
     /// @brief find the index of the best point in the furthest valid gap
-/// @brief Find all gaps in the lidar ranges that are deeper than the minimum threshold
+    /// @brief Find all gaps in the lidar ranges that are deeper than the minimum threshold
     /// @param ranges preprocessed and extended range vector
     /// @return a vector of start and end indices for each gap
     vector<std::pair<int, int>> find_all_gaps(const vector<float>& ranges);
