@@ -18,6 +18,8 @@ private:
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr drive_msg_publisher;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_subscriber;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr safety_brake_sub_;
+    double max_speed_;
+    double min_speed_;
     double max_lidar_range_;
     double fov_half_angle_;
     double car_width_;

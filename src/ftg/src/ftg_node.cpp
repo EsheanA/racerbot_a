@@ -9,6 +9,8 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node") {
     RCLCPP_INFO(this->get_logger(), "Follow the gap node started");
 
     // ROS2 parameters
+    this->declare_parameter("max_speed", 4.5);
+    this->declare_parameter("min_speed", 0.5);
     this->declare_parameter("max_lidar_range", 10.0);
     this->declare_parameter("fov_half_angle_deg", 70.0);
     this->declare_parameter("car_width", 0.4);
@@ -22,6 +24,8 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node") {
     this->declare_parameter("lookahead_max", 1.8);
     this->declare_parameter("steering_deadzone",0.7);
 
+    max_speed_ = this->get_parameter("max_speed").as_double();
+    min_speed_ = this->get_parameter("min_speed").as_double();
     max_lidar_range_ = this->get_parameter("max_lidar_range").as_double();
     fov_half_angle_ = this->get_parameter("fov_half_angle_deg").as_double() * M_PI / 180.0;
     car_width_ = this->get_parameter("car_width").as_double();
@@ -250,8 +254,8 @@ void FollowTheGapNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSh
 
     // Angle-based factor
     double max_angle = 14.0 * M_PI / 180.0; // angle at/beyond which speed hits its minimum
-    double min_angle_speed = 0.3;
-    double max_angle_speed = 6.0;
+    double min_angle_speed = min_speed_;
+    double max_angle_speed = max_speed_;
 
     double t_angle = std::clamp(abs_angle / max_angle, 0.0, 1.0);
     double angle_speed = max_angle_speed - t_angle * (max_angle_speed - min_angle_speed);
@@ -259,8 +263,8 @@ void FollowTheGapNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSh
     // Range-based factor
     double min_range = 0.5; // range at/below which speed hits its minimum
     double max_range = 5.0; // range at/above which speed hits its maximum
-    double min_range_speed = 0.3;
-    double max_range_speed = 6.0;
+    double min_range_speed = min_speed_;
+    double max_range_speed = max_speed_;
 
     double t_range = std::clamp((target_range - min_range) / (max_range - min_range), 0.0, 1.0);
     double range_speed = min_range_speed + t_range * (max_range_speed - min_range_speed);
