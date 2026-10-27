@@ -24,15 +24,15 @@ ros2 launch reactive reactive_launch.py use_fallback_follow_method:=true
 
 **With the least-squares method:**
 ```bash
-ros2 launch reactive reactive_launch.py enable_deadman:=false
+ros2 launch reactive reactive_launch.py enable_safety:=false
 ```
 
 **With the furthest-point fallback method:**
 ```bash
-ros2 launch reactive reactive_launch.py enable_deadman:=false use_fallback_follow_method:=true
+ros2 launch reactive reactive_launch.py enable_safety:=false use_fallback_follow_method:=true
 ```
 
 ## Safety Node
-Make sure to build and run the safety node before running this node, otherwise it will not work. See [Safety Node Readme](../safety_node/README.md) for more details.
+Make sure to build and run the safety node before running this node if `enable_safety` is enabled, otherwise it will not work. See [Safety Node Readme](../safety_node/README.md) for more details.
 
-If you are testing in the simulator, disable the deadman switch with `enable_deadman:=false`
+If you are testing in the simulator, disable safety with `enable_safety:=false`
