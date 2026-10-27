@@ -83,6 +83,12 @@ def generate_launch_description():
     drive_topic = IfElseSubstitution(opponent_car, "/opp_drive", "/drive")
     scan_topic = IfElseSubstitution(opponent_car, "/opp_scan", "/scan")
 
+    obstacle_detection = DeclareLaunchArgument(
+        "obstacle_detection",
+        default_value="true",
+        description="Enables the obstacle detection",
+    )
+
     return LaunchDescription(
         [
             enable_safety_arg,
@@ -97,6 +103,7 @@ def generate_launch_description():
             speed_curve_scale,
             max_slew_rate,
             opponent_car_arg,
+            obstacle_detection,
             # Launch gap_finder_node
             Node(
                 package="reactive",
@@ -104,6 +111,9 @@ def generate_launch_description():
                 name="gap_finder_node",
                 output="screen",
                 remappings=[("/drive", drive_topic), ("/scan", scan_topic)],
+                parameters=[
+                    {"obstacle_detection": LaunchConfiguration("obstacle_detection")}
+                ],
             ),
             # Launch gap_follower_node
             Node(

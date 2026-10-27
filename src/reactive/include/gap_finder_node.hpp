@@ -23,6 +23,7 @@ private:
     double disparity_threshold_;
     double fov_half_angle_;
     double minimum_gap_threshold_;
+    bool obstacle_detection_;
 
     double obstacle_distance_ = 2.0;
     double obstacle_edge_jump_ = 0.5;
