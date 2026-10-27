@@ -75,13 +75,16 @@ bool GapFinderNode::detect_obstacle(const sensor_msgs::msg::LaserScan::ConstShar
                                     const vector<float> &raw, double target_angle)
 {
     const int n = static_cast<int>(raw.size());
-    if (n == 0) return false;
+    if (n == 0)
+        return false;
 
-    auto range_at = [&](int i) -> float {
+    auto range_at = [&](int i) -> float
+    {
         const float r = raw[i];
         return (std::isfinite(r) && r > 0.05f) ? r : static_cast<float>(max_lidar_range_);
     };
-    auto angle_at = [&](int i) -> double {
+    auto angle_at = [&](int i) -> double
+    {
         return scan_msg->angle_min + scan_msg->angle_increment * i;
     };
     const double scan_limit = std::min(fov_half_angle_, M_PI / 2.0);
@@ -93,21 +96,30 @@ bool GapFinderNode::detect_obstacle(const sensor_msgs::msg::LaserScan::ConstShar
     for (int i = 0; i < n; ++i)
     {
         const double a = angle_at(i);
-        if (std::abs(a) >= scan_limit) continue;
+        if (std::abs(a) >= scan_limit)
+            continue;
         const float r = range_at(i);
-        if (std::abs(r * std::sin(a)) > half_width) continue;
-        if (r < forward_min) { forward_min = r; closest = i; }
+        if (std::abs(r * std::sin(a)) > half_width)
+            continue;
+        if (r < forward_min)
+        {
+            forward_min = r;
+            closest = i;
+        }
     }
-    if (closest < 0 || forward_min > obstacle_distance_) return false;
+    if (closest < 0 || forward_min > obstacle_distance_)
+        return false;
 
     // Walk outward until the range jumps away; no jump before the scan ends means a wall
     const int confirm_beams = 3;
-    auto find_edge = [&](int dir) -> int {
+    auto find_edge = [&](int dir) -> int
+    {
         int j = closest;
         while (true)
         {
             const int next = j + dir;
-            if (next < 0 || next >= n || std::abs(angle_at(next)) >= scan_limit) return -1;
+            if (next < 0 || next >= n || std::abs(angle_at(next)) >= scan_limit)
+                return -1;
             if (range_at(next) - range_at(j) > obstacle_edge_jump_)
             {
                 bool persists = true;
@@ -120,7 +132,8 @@ bool GapFinderNode::detect_obstacle(const sensor_msgs::msg::LaserScan::ConstShar
                         break;
                     }
                 }
-                if (persists) return j;
+                if (persists)
+                    return j;
             }
             j = next;
         }
@@ -128,11 +141,13 @@ bool GapFinderNode::detect_obstacle(const sensor_msgs::msg::LaserScan::ConstShar
 
     const int left_edge = find_edge(+1);
     const int right_edge = find_edge(-1);
-    if (left_edge < 0 || right_edge < 0) return false;
+    if (left_edge < 0 || right_edge < 0)
+        return false;
 
     const double y_left = range_at(left_edge) * std::sin(angle_at(left_edge));
     const double y_right = range_at(right_edge) * std::sin(angle_at(right_edge));
-    if (y_left - y_right > obstacle_max_width_) return false;
+    if (y_left - y_right > obstacle_max_width_)
+        return false;
 
     return std::abs(target_angle) >= obstacle_min_target_angle_;
 }
@@ -165,9 +180,10 @@ vector<float> GapFinderNode::preprocess_lidar(const sensor_msgs::msg::LaserScan:
 }
 
 void GapFinderNode::extend_obstacles(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg,
-    vector<float>& ranges)
+                                     vector<float> &ranges)
 {
-    if (ranges.empty()) return;
+    if (ranges.empty())
+        return;
 
     const vector<float> original = ranges; // raw values for disparity comparisons
 
@@ -190,7 +206,8 @@ void GapFinderNode::extend_obstacles(const sensor_msgs::msg::LaserScan::ConstSha
                 size_t start = (i > index_increment) ? i - index_increment : 0;
                 size_t end = std::min(i + index_increment + 1, ranges.size());
 
-                for (size_t j = start; j < end; ++j) {
+                for (size_t j = start; j < end; ++j)
+                {
                     ranges[j] = std::min(ranges[j], closer_range);
                 }
             }
@@ -253,7 +270,8 @@ std::pair<int, int> GapFinderNode::find_furthest_gap(const sensor_msgs::msg::Las
 
 int GapFinderNode::find_furthest_point(vector<float> &ranges, const std::pair<int, int> &gap)
 {
-    if (gap.first == -1) return -1;
+    if (gap.first == -1)
+        return -1;
 
     float max_r = 0.0f;
     for (int i = gap.first; i < gap.second; ++i)
@@ -266,9 +284,14 @@ int GapFinderNode::find_furthest_point(vector<float> &ranges, const std::pair<in
     int i = gap.first;
     while (i < gap.second)
     {
-        if (!(ranges[i] >= cutoff)) { ++i; continue; } // also skips NaN
+        if (!(ranges[i] >= cutoff))
+        {
+            ++i;
+            continue;
+        } // also skips NaN
         const int start = i;
-        while (i < gap.second && ranges[i] >= cutoff) ++i;
+        while (i < gap.second && ranges[i] >= cutoff)
+            ++i;
         if (i - start > best_len)
         {
             best_len = i - start;
