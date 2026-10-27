@@ -16,6 +16,7 @@ GapFinderNode::GapFinderNode() : Node("gap_finder_node")
     this->declare_parameter("obstacle_max_width", 0.8);
     this->declare_parameter("obstacle_min_target_angle_deg", 0.0);
     this->declare_parameter("obstacle_hold_frames", 8);
+    this->declare_parameter("obstacle_detection", true);
 
     // Read into member variables
     max_lidar_range_ = this->get_parameter("max_lidar_range").as_double();
@@ -28,6 +29,7 @@ GapFinderNode::GapFinderNode() : Node("gap_finder_node")
     obstacle_max_width_ = this->get_parameter("obstacle_max_width").as_double();
     obstacle_min_target_angle_ = this->get_parameter("obstacle_min_target_angle_deg").as_double() * M_PI / 180.0;
     obstacle_hold_frames_ = this->get_parameter("obstacle_hold_frames").as_int();
+    obstacle_detection_ = this->get_parameter("obstacle_detection").as_bool();
 
     laser_scan_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
         "scan",
@@ -41,7 +43,8 @@ void GapFinderNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstShare
 {
     auto ranges = preprocess_lidar(scan_msg);
     const vector<float> raw_ranges = ranges; // before obstacle extension
-    extend_obstacles(scan_msg, ranges);
+    if (obstacle_detection_)
+        extend_obstacles(scan_msg, ranges);
 
     auto gap = find_furthest_gap(scan_msg, ranges);
 
@@ -65,8 +68,9 @@ void GapFinderNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstShare
     gap_msg.target_angle = scan_msg->angle_min + scan_msg->angle_increment * furthest_point;
     gap_msg.target_range = ranges[furthest_point];
 
-    gap_msg.obstacle_ahead = update_obstacle_state(
-        detect_obstacle(scan_msg, raw_ranges, gap_msg.target_angle));
+    gap_msg.obstacle_ahead = obstacle_detection_ ? update_obstacle_state(
+                                                       detect_obstacle(scan_msg, raw_ranges, gap_msg.target_angle))
+                                                 : false;
 
     gap_pub_->publish(gap_msg);
 }
