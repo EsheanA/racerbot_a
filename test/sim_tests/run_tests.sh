@@ -4,7 +4,7 @@ set -eo pipefail
 #find dir location of this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 #use that location to find workspace root
-WS_ROOT="$(cd "$SCRIPT_DIR/../../../../")"
+WS_ROOT="$(cd "$SCRIPT_DIR/../../../../" && pwd)"
 
 cd "$WS_ROOT"
 
@@ -16,11 +16,11 @@ colcon build --packages-select sim_tests
 
 source install/local_setup.bash
 
-# Select algorithm
+# Select algorithm (currently only works with ftg)
 export ALGORITHM_PACKAGE="ftg"
 export ALGORITHM_EXECUTABLE="ftg_node"
 
-# Select map
+# Select map (currently only works with levine)
 export SIM_CONFIG="/racerbot_ws/src/racerbot_a/test/sim_tests/config/levine.yaml"
 
 #run tests
