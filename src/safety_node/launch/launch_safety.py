@@ -23,6 +23,18 @@ def generate_launch_description():
         description="Whether the ttc braking is enforced by safety_node",
     )
 
+    ttc_threshold = DeclareLaunchArgument(
+        "ttc_threshold",
+        default_value="0.3",
+        description="Time-to-collision threshold in seconds for emergency braking",
+    )
+
+    max_ttc_angle_deg = DeclareLaunchArgument(
+        "max_ttc_angle_deg",
+        default_value="90.0",
+        description="Maximum angle from center (degrees) considered for TTC braking",
+    )
+
     opponent_car = LaunchConfiguration("opponent_car")
 
     opponent_car_arg = DeclareLaunchArgument(
@@ -42,6 +54,8 @@ def generate_launch_description():
             deadman_button,
             message_timeout_duration,
             enable_ttc,
+            ttc_threshold,
+            max_ttc_angle_deg,
             Node(
                 package="safety_node",
                 executable="safety_node",
@@ -54,6 +68,8 @@ def generate_launch_description():
                             "message_timeout_duration"
                         ),
                         "enable_ttc": LaunchConfiguration("enable_ttc"),
+                        "ttc_threshold": LaunchConfiguration("ttc_threshold"),
+                        "max_ttc_angle_deg": LaunchConfiguration("max_ttc_angle_deg"),
                     },
                 ],
                 remappings=[("/ego_racecar/odom", odom_topic), ("/scan", scan_topic)],
