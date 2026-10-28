@@ -1,14 +1,38 @@
+# Simulator Tests
+
+These are full-system tests that test out the algorithm nodes inside the simulator
+
+
+## Option A: Run colcon manually
+
+### Building
+```bash
+cd /racerbot_ws
+colcon build --packages-select sim_tests
+```
+
+### Running the tests
+
+```bash
+colcon test --packages-select sim_tests \
+ --return-code-on-test-failure \
+ --event-handlers console_direct+
+```
+## Option B: Run using the following shell script
+```bash
 #!/usr/bin/env bash
 set -eo pipefail
 
 #find dir location of this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 #use that location to find workspace root
-WS_ROOT="$(cd "$SCRIPT_DIR/../../../../" && pwd)"
+WS_ROOT="$(cd "$SCRIPT_DIR/../" && pwd)"
+# WS_ROOT="$(cd "$SCRIPT_DIR/../../../../" && pwd)"
 
 cd "$WS_ROOT"
 
-#source and build
+#source the workspace(Can replace with your own)
 source /racerbot_ws/.venv/bin/activate
 source /opt/ros/humble/setup.bash
 
@@ -29,3 +53,6 @@ colcon test --packages-select sim_tests \
  --event-handlers console_direct+
 
 colcon test-result --verbose
+```
+
+

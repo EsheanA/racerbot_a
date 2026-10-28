@@ -15,7 +15,11 @@
     <test_depend>launch_testing</test_depend>
     <test_depend>launch_testing_ament_cmake</test_depend>
     <test_depend>rclpy</test_depend>
+    
     <test_depend>ament_index_python</test_depend>
+    <test_depend>ament_cmake_pytest</test_depend>
+    <test_depend>launch_pytest</test_depend>
+    <test_depend>python3-pytest</test_depend>
 
     <test_depend>safety_node</test_depend>
     <test_depend>ftg</test_depend>
