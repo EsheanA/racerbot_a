@@ -1,6 +1,6 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, IfElseSubstitution
 from launch_ros.actions import Node
 
 
@@ -23,6 +23,20 @@ def generate_launch_description():
         description="Whether the ttc braking is enforced by safety_node",
     )
 
+    opponent_car = LaunchConfiguration("opponent_car")
+
+    opponent_car_arg = DeclareLaunchArgument(
+        "opponent_car",
+        default_value="false",
+        choices=["true", "false"],
+        description="If true, remap /ego_racecar/odom -> /ego_racecar/opp_odom and /scan -> /opp_scan",
+    )
+
+    odom_topic = IfElseSubstitution(
+        opponent_car, "/ego_racecar/opp_odom", "/ego_racecar/odom"
+    )
+    scan_topic = IfElseSubstitution(opponent_car, "/opp_scan", "/scan")
+
     return LaunchDescription(
         [
             deadman_button,
@@ -42,6 +56,7 @@ def generate_launch_description():
                         "enable_ttc": LaunchConfiguration("enable_ttc"),
                     },
                 ],
+                remappings=[("/ego_racecar/odom", odom_topic), ("/scan", scan_topic)],
             ),
         ]
     )
