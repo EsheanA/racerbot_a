@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+    <name>sim_tests</name>
+    <version>0.0.0</version>
+    <description>Automated simulation tests</description>
+     <maintainer email="aidan@eshean.com">rosdev</maintainer>
+    <license>TODO: License declaration</license>
+
+    <buildtool_depend>ament_cmake</buildtool_depend>
+
+    <test_depend>ament_cmake_ros</test_depend>
+    <test_depend>launch</test_depend>
+    <test_depend>launch_ros</test_depend>
+    <test_depend>launch_testing</test_depend>
+    <test_depend>launch_testing_ament_cmake</test_depend>
+    <test_depend>rclpy</test_depend>
+    
+    <test_depend>ament_index_python</test_depend>
+    <test_depend>ament_cmake_pytest</test_depend>
+    <test_depend>launch_pytest</test_depend>
+    <test_depend>python3-pytest</test_depend>
+
+    <test_depend>safety_node</test_depend>
+    <test_depend>ftg</test_depend>
+    <test_depend>disparity_extender</test_depend>
+    <test_depend>pure_pursuit</test_depend>
+    <test_depend>reactive</test_depend>
+
+    <test_depend>f1tenth_gym_ros</test_depend>
+
+    <export>
+        <build_type>ament_cmake</build_type>
+    </export>
+</package>
