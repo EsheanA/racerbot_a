@@ -19,20 +19,27 @@ colcon test --packages-select sim_tests \
  --event-handlers console_direct+
 ```
 ## Option B: Run using the following shell script
+
+```bash
+cd /racerbot_ws
+mkdir scripts
+touch scripts/run_tests.sh
+```
+
+### Paste the following script into the run_tests.sh
 ```bash
 #!/usr/bin/env bash
 set -eo pipefail
 
-#find dir location of this script
+# Find dir location of this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-#use that location to find workspace root
+# Use that location to find workspace root (Assumes script is in a scripts folder)
 WS_ROOT="$(cd "$SCRIPT_DIR/../" && pwd)"
-# WS_ROOT="$(cd "$SCRIPT_DIR/../../../../" && pwd)"
 
 cd "$WS_ROOT"
 
-#source the workspace(Can replace with your own)
+# Source the workspace (Example)
 source /racerbot_ws/.venv/bin/activate
 source /opt/ros/humble/setup.bash
 

@@ -21,13 +21,10 @@ def simulation():
     )
 
 
-    # ALGORITHM_PACKAGE = os.environ["ALGORITHM_PACKAGE"] 
     ALGORITHM_PACKAGE = os.environ.get("ALGORITHM_PACKAGE", "ftg")
-    # ALGORITHM_EXECUTABLE = os.environ["ALGORITHM_EXECUTABLE"]
     ALGORITHM_EXECUTABLE = os.environ.get("ALGORITHM_EXECUTABLE", "ftg_node")
 
     default_config = (Path(__file__).resolve().parents[1] / "config" / "levine.yaml")
-    # config_path = os.environ["SIM_CONFIG"]
     config_path = os.environ.get("SIM_CONFIG", str(default_config))
 
 
