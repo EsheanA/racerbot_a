@@ -5,6 +5,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 struct Waypoint
 {
@@ -18,19 +19,26 @@ public:
     PurePursuit();
 
 private:
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr safety_brake_sub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr drive_pub_;
     std::vector<Waypoint> waypoints_;
+    bool enable_safety_;
+    bool safety_brake_engaged_;
+    double safety_bubble_scale_;
     double lookahead_base_;        // base lookahead L0 (m)
     double lookahead_min_;         // lower clamp (m)
     double lookahead_max_;         // upper clamp (m)
     double lookahead_speed_gain_;  // extra lookahead (m) per m/s of speed
     size_t last_goal_index_ = 0;   // index of last chosen goal
     double wheel_base_;            // front-to-rear axle distance (m)
-    double max_steering_;  // steering angle limit (rad)
-    double max_speed_;     // speed on straights (m/s)
-    double min_speed_;     // speed at full steering lock (m/s)
+    double max_steering_;          // steering angle limit (rad)
+    double max_speed_;             // speed on straights (m/s)
+    double min_speed_;             // speed at full steering lock (m/s)
     bool initialized_ = false;     // false until first odom, then closest waypoint is found once
+
+    /// @brief Runs everytime something is published to the safety brake topic
+    void safety_brake_callback(const std_msgs::msg::Bool::ConstSharedPtr safety_brake_msg);
 
     /// @brief Loads the waypoint path from a file into waypoints_.
     /// @param path Path to the waypoint file (e.g. a CSV with x, y per row).

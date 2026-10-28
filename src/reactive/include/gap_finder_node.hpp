@@ -1,3 +1,5 @@
+#pragma once
+
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -6,6 +8,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <limits>
 
 class GapFinderNode : public rclcpp::Node
 {
@@ -20,6 +23,14 @@ private:
     double disparity_threshold_;
     double fov_half_angle_;
     double minimum_gap_threshold_;
+    bool obstacle_detection_;
+
+    double obstacle_distance_ = 2.0;
+    double obstacle_edge_jump_ = 0.5;
+    double obstacle_max_width_ = 0.8;
+    double obstacle_min_target_angle_ = 0.14;
+    int obstacle_hold_frames_ = 8;
+    int obstacle_hold_counter_ = 0;
 
     /// @brief Callback invoked each time the lidar completes a new scan.
     /// @param scan_msg Shared pointer to the incoming LaserScan message.
@@ -47,4 +58,16 @@ private:
     /// @param gap Pair of indices into ranges corresponding to the gap.
     /// @return Index into ranges corresponding to the furthest point in the given gap.
     int find_furthest_point(std::vector<float> &ranges, const std::pair<int, int> &gap);
+
+    /// @brief Updates the node's obstacle state and the obstacle frame hold
+    /// @param detected Whether or not an obstacle was detected
+    /// @return If the obstacle hold counter is greater than zero, meaning an obstacle is still detected
+    bool update_obstacle_state(bool detected);
+
+    /// @brief Detects whether or not there is an obstacle in front of the car
+    /// @param scan_msg The LiDAR scan message
+    /// @param raw The raw LiDAR scan ranges
+    /// @param target_angle The target angle determined by the gap finder
+    /// @return Whether or not an obstacle was detected
+    bool detect_obstacle(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg, const std::vector<float> &raw, double target_angle);
 };

@@ -9,7 +9,7 @@ GapFollowNode::GapFollowNode() : Node("gap_follow_node")
     gap_sub_ = this->create_subscription<reactive::msg::Gap>(
         "gap", 10,
         std::bind(&GapFollowNode::gap_callback, this, std::placeholders::_1));
-    
+
     safety_brake_sub_ = this->create_subscription<std_msgs::msg::Bool>(
         "/safety/brake", 10,
         std::bind(&GapFollowNode::safety_brake_callback, this, std::placeholders::_1));
@@ -45,7 +45,8 @@ GapFollowNode::GapFollowNode() : Node("gap_follow_node")
 void GapFollowNode::gap_callback(const reactive::msg::Gap::ConstSharedPtr gap_msg)
 {
     int safety_publisher_count = this->safety_brake_sub_->get_publisher_count();
-    if (enable_safety_ && (safety_brake_engaged_ || safety_publisher_count == 0)) {
+    if (enable_safety_ && (safety_brake_engaged_ || safety_publisher_count == 0))
+    {
         ackermann_msgs::msg::AckermannDriveStamped drive_msg;
         drive_msg.header.stamp = this->now();
         drive_msg.drive.steering_angle = commanded_steering_angle_;
@@ -66,39 +67,12 @@ void GapFollowNode::gap_callback(const reactive::msg::Gap::ConstSharedPtr gap_ms
 
 void GapFollowNode::drive_best_point(const reactive::msg::Gap::ConstSharedPtr gap_msg)
 {
-    // Speed depends on target point range
-    float velocity;
-    float target_range = gap_msg->target_range;
-
-    /* Slower speed at small range
-    double min_range = 0.5;
-    double max_range = 4.0;
-
-    double t = (target_range - min_range) / (max_range - min_range);
-    t = std::clamp(t, 0.0, 1.0);
-
-    velocity = static_cast<float>(min_speed_ + (t * t) * (max_speed_ - min_speed_));
-    */
-
-    // Step linear
-    if (target_range > 4.0f)
-        velocity = max_speed_;
-    else if (target_range > 3.0f)
-        velocity = 4.0f;
-    else if (target_range > 2.0f)
-        velocity = 3.0f;
-    else if (target_range > 1.0f)
-        velocity = 2.0f;
-    else if (target_range > 0.5)
-        velocity = 1.0f;
-    else
-        velocity = min_speed_;
 
     // Publishing to drive
     ackermann_msgs::msg::AckermannDriveStamped drive_msg;
     drive_msg.header.stamp = this->now();
     drive_msg.drive.steering_angle = gap_msg->target_angle;
-    drive_msg.drive.speed = velocity;
+    drive_msg.drive.speed = get_combined_speed(gap_msg->target_angle, gap_msg->target_range);
     drive_pub_->publish(drive_msg);
 }
 
@@ -147,13 +121,10 @@ void GapFollowNode::least_squares_pathfinding(const reactive::msg::Gap::ConstSha
     double delta = std::clamp(filtered_steering_angle_ - commanded_steering_angle_, -max_delta, max_delta);
     commanded_steering_angle_ = std::clamp(commanded_steering_angle_ + delta, -max_steering_angle_, max_steering_angle_);
 
-    double velocity = angle_to_speed_function(filtered_steering_angle_);
-    commanded_steering_angle_ = steering_gain_ * filtered_steering_angle_;
-
     ackermann_msgs::msg::AckermannDriveStamped drive_msg;
     drive_msg.header.stamp = this->now();
     drive_msg.drive.steering_angle = commanded_steering_angle_;
-    drive_msg.drive.speed = velocity;
+    drive_msg.drive.speed = get_combined_speed(commanded_steering_angle_, gap_msg->target_range);
     drive_pub_->publish(drive_msg);
 }
 
@@ -201,7 +172,8 @@ double GapFollowNode::compute_steering_angle(Eigen::VectorXd coefficients, Eigen
     {
         double t = theta_min + (theta_max - theta_min) * i / k_samples_;
         double predicted_r = get_curve_output(t, coefficients);
-        if (predicted_r >= max_lookahead) continue;
+        if (predicted_r >= max_lookahead)
+            continue;
 
         if (predicted_r > best_range)
         {
@@ -215,7 +187,7 @@ double GapFollowNode::compute_steering_angle(Eigen::VectorXd coefficients, Eigen
 double GapFollowNode::angle_to_speed_function(double angle)
 {
 
-    const double a = -1.6;
+    const double a = -4.1;
     const double b = 1.0;
     const double c = 3.6;
 
@@ -223,7 +195,31 @@ double GapFollowNode::angle_to_speed_function(double angle)
     return std::clamp(y, min_speed_, max_speed_);
 }
 
-void GapFollowNode::safety_brake_callback(const std_msgs::msg::Bool::ConstSharedPtr safety_brake_msg) {
+double GapFollowNode::range_to_speed_function(double range)
+{
+    const double min_range = 0.5;
+    const double max_range = 5.0;
+
+    range = std::clamp(range, min_range, max_range);
+
+    const double a = 2.5;
+    const double b = -0.3;
+    const double c = 2.3;
+
+    double y = speed_curve_scale_ * (a * std::log(range + b) + c);
+    return std::clamp(y, min_speed_, max_speed_);
+}
+
+double GapFollowNode::get_combined_speed(double angle, double range)
+{
+    double angle_speed = angle_to_speed_function(angle);
+    double range_speed = range_to_speed_function(range);
+
+    return std::min(angle_speed, range_speed);
+}
+
+void GapFollowNode::safety_brake_callback(const std_msgs::msg::Bool::ConstSharedPtr safety_brake_msg)
+{
     safety_brake_engaged_ = safety_brake_msg->data;
 }
 

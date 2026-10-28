@@ -18,6 +18,8 @@ private:
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr drive_msg_publisher;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_subscriber;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr safety_brake_sub_;
+    double max_speed_;
+    double min_speed_;
     double max_lidar_range_;
     double fov_half_angle_;
     double car_width_;
@@ -25,8 +27,13 @@ private:
     bool enable_safety_;
     bool safety_brake_engaged_;
     double safety_bubble_scale_;
-    double prev_angle_adjuster_;
+    double prev_angle_adjuster_;  // scale weight of prev angle when smoothing
     double prev_angle_;
+    double bubble_lookahead_;     // how far ahead an obj can be and get a bubble
+    double bubble_half_width_;    // how far either side of the car's centreline a obj can be and get bubble
+    double wheelbase_;            // distance between front and rear axles
+    double lookahead_max_;        // cap on the target distance used for steering
+    double steering_deadzone_;    // steering angles below this (rad) are zeroed to stop wobble
 
     /// @brief clean lidar scan
     /// @param scan_msg The scan data from the lidar
@@ -36,17 +43,15 @@ private:
     /// @brief extend obstacles outward to account for car width
     /// @param scan_msg the scan data from the lidar
     /// @param ranges preprocessed range vector to modify in place
-    void extend_obstacles(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg,
-        vector<float>& ranges);
+    void extend_obstacles(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg, vector<float>& ranges);
 
     /// @brief creates a safety bubble around closest obstacle
     /// @param ranges preprocessed range vector to modify in place
     /// @param scan_msg the scan data from the lidar
-    void draw_safety_bubble(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg, 
-                        std::vector<float>& ranges);
+    void draw_safety_bubble(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg, std::vector<float>& ranges);
 
     /// @brief find the index of the best point in the furthest valid gap
-/// @brief Find all gaps in the lidar ranges that are deeper than the minimum threshold
+    /// @brief Find all gaps in the lidar ranges that are deeper than the minimum threshold
     /// @param ranges preprocessed and extended range vector
     /// @return a vector of start and end indices for each gap
     vector<std::pair<int, int>> find_all_gaps(const vector<float>& ranges);
@@ -63,7 +68,7 @@ private:
     /// @brief Finds the exact index (center) to drive towards within the best gap
     /// @param best_gap a pair representing the start and end index of the best gap
     /// @return index of the best point to target, or -1 if no valid gap
-    int pick_best_point(const std::pair<int, int>& best_gap);
+    int pick_best_point(const std::pair<int, int>& best_gap, const vector<float>& ranges);
 
     /// @brief func to be called when the lidar completes a scan
     /// @param scan_msg The scan data from the lidar
