@@ -9,7 +9,7 @@ DisparityExtenderNode::DisparityExtenderNode() : Node("disparity_extender_node")
     this->declare_parameter("max_steering_angle", 0.349);
     this->declare_parameter("max_lidar_range", 10.0);
     this->declare_parameter("car_width", 0.4);
-    this->declare_parameter("car_width_extended", 0.65);
+    this->declare_parameter("car_width_extended", 0.85);
     this->declare_parameter("disparity_threshold", 1.0);
     this->declare_parameter("fov_half_angle_deg", 90.0);
     this->declare_parameter("minimum_gap_threshold", 0.1);

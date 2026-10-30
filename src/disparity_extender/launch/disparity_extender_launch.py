@@ -26,7 +26,7 @@ def generate_launch_description():
 
     car_width_extended_arg = DeclareLaunchArgument(
         "car_width_extended",
-        default_value="0.65",
+        default_value="0.85",
         description="Extended car width used for gap/bubble computation (meters)",
     )
 
