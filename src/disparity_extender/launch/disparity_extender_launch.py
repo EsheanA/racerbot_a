@@ -14,7 +14,7 @@ def generate_launch_description():
 
     max_lidar_range_arg = DeclareLaunchArgument(
         "max_lidar_range",
-        default_value="25.0",
+        default_value="10.0",
         description="Maximum LiDAR range considered (meters)",
     )
 
@@ -50,13 +50,13 @@ def generate_launch_description():
 
     max_speed_arg = DeclareLaunchArgument(
         "max_speed",
-        default_value="3.0",
+        default_value="5.5",
         description="Maximum forward speed allowed in meters per second",
     )
 
     min_speed_arg = DeclareLaunchArgument(
         "min_speed",
-        default_value="0.5",
+        default_value="2.0",
         description="Minimum forward speed allowed in meters per second",
     )
 
