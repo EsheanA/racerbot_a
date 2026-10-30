@@ -264,27 +264,19 @@ void FollowTheGapNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSh
 
     float abs_angle = std::abs(steering_angle);
 
-    float speed;
+    // Limit 1: slow down for sharp turns (v = sqrt(a * R), R = wheelbase / tan(steer))
+    float abs_tan = std::tan(abs_angle);
+    float v_turn = max_speed_;
+    if (abs_tan > 1e-3f)
+    {
+        v_turn = std::sqrt(3.5 * wheelbase_ / abs_tan);
+    }
 
-    // Angle-based factor
-    double max_angle = 18.0 * M_PI / 180.0; // angle at/beyond which speed hits its minimum
-    double min_angle_speed = min_speed_;
-    double max_angle_speed = max_speed_;
+    // Limit 2: slow down when little distance is left to turn
+    float v_range = std::sqrt(3.5 * target_range);
 
-    double t_angle = std::clamp(abs_angle / max_angle, 0.0, 1.0);
-    double angle_speed = max_angle_speed - t_angle * (max_angle_speed - min_angle_speed);
-
-    // Range-based factor
-    double min_range = 0.5; // range at/below which speed hits its minimum
-    double max_range = 5.0; // range at/above which speed hits its maximum
-    double min_range_speed = min_speed_;
-    double max_range_speed = max_speed_;
-
-    double t_range = std::clamp((target_range - min_range) / (max_range - min_range), 0.0, 1.0);
-    double range_speed = min_range_speed + t_range * (max_range_speed - min_range_speed);
-
-    // Combine: take the more conservative (lower) of the two
-    speed = static_cast<float>(std::min(angle_speed, range_speed) * 1.1);
+    float speed = std::min({static_cast<float>(max_speed_), v_turn, v_range});
+    speed = std::clamp(speed, static_cast<float>(min_speed_), static_cast<float>(max_speed_));
 
     ackermann_msgs::msg::AckermannDriveStamped drive_msg;
     drive_msg.header.stamp = scan_msg->header.stamp;
