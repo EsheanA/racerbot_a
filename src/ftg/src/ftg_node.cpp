@@ -23,6 +23,7 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node") {
     this->declare_parameter("wheelbase", 0.33);
     this->declare_parameter("lookahead_max", 1.8);
     this->declare_parameter("steering_deadzone",0.7);
+    this->declare_parameter("steering_angle_max", 0.349);
 
     max_speed_ = this->get_parameter("max_speed").as_double();
     min_speed_ = this->get_parameter("min_speed").as_double();
@@ -38,6 +39,7 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node") {
     wheelbase_ = this->get_parameter("wheelbase").as_double();
     lookahead_max_ = this->get_parameter("lookahead_max").as_double();
     steering_deadzone_ = this->get_parameter("steering_deadzone").as_double() * M_PI / 180.0;
+    steering_angle_max_ = this->get_parameter("steering_angle_max").as_double();
     prev_angle_ = 0;
 
     this->drive_msg_publisher = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("drive", 10);
@@ -245,7 +247,7 @@ void FollowTheGapNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSh
     //If the point we need to steer to is hard to the left or right, steer as hard to it
     if (abs(current_angle) > 50 * M_PI / 180.0) {
       if (current_angle >= 0) {
-        target_angle = 0.41f; // Steering max
+        target_angle = steering_angle_max_; // Steering max
       } else {
         target_angle = -1.0f * 0.41f;
       }
