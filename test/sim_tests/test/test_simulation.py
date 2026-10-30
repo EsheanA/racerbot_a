@@ -238,7 +238,7 @@ def test_loop_detected(request):
 
     try:
         deadline = time.monotonic() + 30.0
-        while time.monotonic() < deadline:
+        while (time.monotonic() < deadline and not(crash_detector.crash_detected)):
             rclpy.spin_once(node, timeout_sec=0.1)
             assert not(crash_detector.crash_detected), "Crash Detected During The Run"
 
