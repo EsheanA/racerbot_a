@@ -96,6 +96,12 @@ def generate_launch_description():
         description="Maximum turning angle in radians."
     )
 
+    max_lateral_acc_arg = DeclareLaunchArgument(
+        "max_lateral_acc",
+        default_value="3.5",
+        description="Maximum lateral acceleration in m/s^2",
+    )
+
     opponent_car = LaunchConfiguration("opponent_car")
 
     opponent_car_arg = DeclareLaunchArgument(

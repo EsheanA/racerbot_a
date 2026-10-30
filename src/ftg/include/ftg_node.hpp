@@ -35,6 +35,7 @@ private:
     double lookahead_max_;        // cap on the target distance used for steering
     double steering_deadzone_;    // steering angles below this (rad) are zeroed to stop wobble
     double steering_angle_max_;    //Max steering angle in radians
+    double max_lateral_acc_;
 
     /// @brief clean lidar scan
     /// @param scan_msg The scan data from the lidar

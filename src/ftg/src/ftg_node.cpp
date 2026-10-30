@@ -10,7 +10,7 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node") {
 
     // ROS2 parameters
     this->declare_parameter("max_speed", 4.5);
-    this->declare_parameter("min_speed", 0.5);
+    this->declare_parameter("min_speed", 0.7);
     this->declare_parameter("max_lidar_range", 10.0);
     this->declare_parameter("fov_half_angle_deg", 100.0);
     this->declare_parameter("car_width", 0.4);
@@ -24,6 +24,7 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node") {
     this->declare_parameter("lookahead_max", 1.8);
     this->declare_parameter("steering_deadzone",0.7);
     this->declare_parameter("steering_angle_max", 0.349);
+    this->declare_parameter("max_lateral_acc",3.5);
 
     max_speed_ = this->get_parameter("max_speed").as_double();
     min_speed_ = this->get_parameter("min_speed").as_double();
@@ -40,6 +41,7 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node") {
     lookahead_max_ = this->get_parameter("lookahead_max").as_double();
     steering_deadzone_ = this->get_parameter("steering_deadzone").as_double() * M_PI / 180.0;
     steering_angle_max_ = this->get_parameter("steering_angle_max").as_double();
+    max_lateral_acc_ = this->get_parameter("max_lateral_acc").as_double();
     prev_angle_ = 0;
 
     this->drive_msg_publisher = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("drive", 10);
@@ -269,11 +271,11 @@ void FollowTheGapNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSh
     float v_turn = max_speed_;
     if (abs_tan > 1e-3f)
     {
-        v_turn = std::sqrt(3.5 * wheelbase_ / abs_tan);
+        v_turn = std::sqrt(max_lateral_acc_ * wheelbase_ / abs_tan);
     }
 
     // Limit 2: slow down when little distance is left to turn
-    float v_range = std::sqrt(3.5 * target_range);
+    float v_range = std::sqrt(max_lateral_acc_ * target_range);
 
     float speed = std::min({static_cast<float>(max_speed_), v_turn, v_range});
     speed = std::clamp(speed, static_cast<float>(min_speed_), static_cast<float>(max_speed_));
