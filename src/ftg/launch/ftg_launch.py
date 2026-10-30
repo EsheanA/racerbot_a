@@ -131,6 +131,8 @@ def generate_launch_description():
             wheelbase_arg,
             lookahead_max_arg,
             steering_deadzone_arg,
+            steering_max_angle_arg,
+            max_lateral_acc_arg,
             # Launch follow the gap
             Node(
                 package="ftg",
@@ -152,6 +154,8 @@ def generate_launch_description():
                     {"wheelbase": LaunchConfiguration("wheelbase")},
                     {"lookahead_max": LaunchConfiguration("lookahead_max")},
                     {"steering_deadzone": LaunchConfiguration("steering_deadzone")},
+                    {"steering_angle_max": LaunchConfiguration("steering_angle_max")},
+                    {"max_lateral_acc": LaunchConfiguration("max_lateral_acc")},
                 ],
                 remappings=[("/drive", drive_topic), ("/scan", scan_topic)],
             ),
