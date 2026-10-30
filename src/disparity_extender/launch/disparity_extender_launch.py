@@ -87,6 +87,12 @@ def generate_launch_description():
         description="If true, remap /drive -> /opp_drive and /scan -> /opp_scan",
     )
 
+    max_steering_angle_arg = DeclareLaunchArgument(
+        "max_steering_angle",
+        default_value="0.349",
+        description="Maximum steering angle in radians",
+    )
+
     drive_topic = IfElseSubstitution(opponent_car, "/opp_drive", "/drive")
     scan_topic = IfElseSubstitution(opponent_car, "/opp_scan", "/scan")
 
@@ -105,6 +111,7 @@ def generate_launch_description():
             alpha_arg,
             wheelbase_arg,
             max_lateral_acc_arg,
+            max_steering_angle_arg,
             # Launch disparity_extender_node
             Node(
                 package="disparity_extender",
@@ -124,6 +131,7 @@ def generate_launch_description():
                     {"alpha": LaunchConfiguration("alpha")},
                     {"wheelbase": LaunchConfiguration("wheelbase")},
                     {"max_lateral_acc": LaunchConfiguration("max_lateral_acc")},
+                    {"max_steering_angle": LaunchConfiguration("max_steering_angle")},
                 ],
                 remappings=[("/drive", drive_topic), ("/scan", scan_topic)],
             ),
