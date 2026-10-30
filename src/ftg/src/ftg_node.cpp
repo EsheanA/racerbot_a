@@ -180,7 +180,7 @@ std::pair<int, int> FollowTheGapNode::pick_best_gap(const sensor_msgs::msg::Lase
         size_t min_width = static_cast<size_t>((car_width_ / avg_depth) / scan_msg->angle_increment);
         if (static_cast<size_t>(gap_end - gap_start) < min_width) continue;
 
-        // Score favors gaps that are both wide and deep
+        // Score to find best gap by favoring gaps that are both wide and deep
         float score = 0.0f;
         for (int j = gap_start; j < gap_end; j++) {
           score += ranges[j] - minimum_gap_threshold_;
@@ -242,15 +242,16 @@ void FollowTheGapNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSh
     // target angle arcing through target point
     float target_angle = static_cast<float>(std::atan2(2.0 * wheelbase_ * std::sin(current_angle), lookahead));
 
-    if (abs(current_angle) > 45 * M_PI / 180.0) {
+    //If the point we need to steer to is hard to the left or right, steer as hard to it
+    if (abs(current_angle) > 50 * M_PI / 180.0) {
       if (current_angle >= 0) {
-        target_angle = 0.4189f;
+        target_angle = 0.41f; // Steering max
       } else {
-        target_angle = -1.0f * 0.4189f;
+        target_angle = -1.0f * 0.41f;
       }
     }
 
-    // smooth with prev
+    // Smooth with previous steering_angle
     float steering_angle = prev_angle_ * prev_angle_adjuster_ + target_angle * (1 - prev_angle_adjuster_);
     prev_angle_ = steering_angle;
 
