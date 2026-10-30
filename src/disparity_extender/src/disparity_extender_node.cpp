@@ -233,8 +233,7 @@ void DisparityExtenderNode::drive_best_point(const float range, const float stee
 {
     float steer = static_cast<float>(alpha_) * steering_angle + (1.0f - alpha_) * prev_steer_;
     prev_steer_ = steer;
-    std::clamp(steer, static_cast<float>(-max_steering_angle_), static_cast<float>(max_steering_angle_));
-
+    steer = std::clamp(steer, static_cast<float>(-max_steering_angle_), static_cast<float>(max_steering_angle_));
     // Limit 1: slow down for sharp turns (v = sqrt(a * R), R = wheelbase / tan(steer))
     float abs_tan = std::tan(std::abs(steer));
     float v_turn = max_speed_;
