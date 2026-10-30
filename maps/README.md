@@ -29,3 +29,9 @@ This file explains how to make, modify, and change maps for the F1TENTH gym simu
 2. Find the `map_path` parameter and change it to `map/<new-map-name>_greyscale`.
    - *Example:* Line 51: `map_path: 'maps/circularTrack_greyscale'`
 3. Build and source your workspace to run it in the simulator.
+
+```bash
+cd path/racerbot_ws/src
+rm -rf f1tenth_gym_ros/maps/*
+cp -a racerbot_a/maps/. f1tenth_gym_ros/maps/
+```
