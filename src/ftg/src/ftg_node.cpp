@@ -12,7 +12,7 @@ FollowTheGapNode::FollowTheGapNode() : Node("follow_the_gap_node") {
     this->declare_parameter("max_speed", 4.5);
     this->declare_parameter("min_speed", 0.5);
     this->declare_parameter("max_lidar_range", 10.0);
-    this->declare_parameter("fov_half_angle_deg", 70.0);
+    this->declare_parameter("fov_half_angle_deg", 100.0);
     this->declare_parameter("car_width", 0.4);
     this->declare_parameter("minimum_gap_threshold", 1.0);
     this->declare_parameter("enable_safety", true);
@@ -181,7 +181,10 @@ std::pair<int, int> FollowTheGapNode::pick_best_gap(const sensor_msgs::msg::Lase
         if (static_cast<size_t>(gap_end - gap_start) < min_width) continue;
 
         // Score favors gaps that are both wide and deep
-        float score = (gap_end - gap_start) * avg_depth;
+        float score = 0.0f;
+        for (int j = gap_start; j < gap_end; j++) {
+          score += ranges[j] - minimum_gap_threshold_;
+        }
 
         if (score > best_score) {
             best_score = score;
@@ -239,6 +242,14 @@ void FollowTheGapNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSh
     // target angle arcing through target point
     float target_angle = static_cast<float>(std::atan2(2.0 * wheelbase_ * std::sin(current_angle), lookahead));
 
+    if (abs(current_angle) > 45 * M_PI / 180.0) {
+      if (current_angle >= 0) {
+        target_angle = 0.4189f;
+      } else {
+        target_angle = -1.0f * 0.4189f;
+      }
+    }
+
     // smooth with prev
     float steering_angle = prev_angle_ * prev_angle_adjuster_ + target_angle * (1 - prev_angle_adjuster_);
     prev_angle_ = steering_angle;
@@ -253,7 +264,7 @@ void FollowTheGapNode::lidar_callback(const sensor_msgs::msg::LaserScan::ConstSh
     float speed;
 
     // Angle-based factor
-    double max_angle = 14.0 * M_PI / 180.0; // angle at/beyond which speed hits its minimum
+    double max_angle = 18.0 * M_PI / 180.0; // angle at/beyond which speed hits its minimum
     double min_angle_speed = min_speed_;
     double max_angle_speed = max_speed_;
 
