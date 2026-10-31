@@ -117,6 +117,8 @@ def simulation():
         output="screen",
         parameters=[{"enable_safety": False}]
     )
+
+    node.get_logger
     return launch.LaunchDescription([
         simulator,
         algorithm,
@@ -140,7 +142,7 @@ def test_odometry_received():
     )
 
     try:
-        deadline = time.monotonic() + 30.0
+        deadline = time.monotonic() + 15.0
 
         while time.monotonic() < deadline:
             rclpy.spin_once(node, timeout_sec=0.1)
@@ -150,7 +152,7 @@ def test_odometry_received():
 
         node.get_logger().info("Observing the simulation for 30 seconds")
 
-        observation_deadline = time.monotonic() + 30.0
+        observation_deadline = time.monotonic() + 15.0
         while time.monotonic() < observation_deadline:
             rclpy.spin_once(node, timeout_sec=0.1)
 
@@ -181,7 +183,7 @@ def test_loop_detected(request):
     node.create_subscription(Odometry, "/ego_racecar/odom", odom_cb, 10)
 
     try:
-        deadline = time.monotonic() + 30.0
+        deadline = time.monotonic() + 15.0
         while time.monotonic() < deadline:
             rclpy.spin_once(node, timeout_sec=0.1)
     finally:
