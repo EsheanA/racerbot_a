@@ -17,6 +17,9 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from nav_msgs.msg import Odometry
 
+##Custom logger
+from simulation_logger import SimulatorTestLogger
+
 # For Crash Detection
 from sensor_msgs.msg import LaserScan
 
@@ -144,13 +147,18 @@ def simulation():
     sim_share = Path(
         get_package_share_directory("f1tenth_gym_ros")
     )
+    
+    min_speed = float(os.environ.get("MIN_SPEED"))
+    max_speed = float(os.environ.get("MIN_SPEED"))
+    
 
+    algorithm_pkg = os.environ.get("ALGORITHM_PACKAGE", "ftg")
+    algorithm_ex = os.environ.get("ALGORITHM_EXECUTABLE", "ftg_node")
 
-    ALGORITHM_PACKAGE = os.environ.get("ALGORITHM_PACKAGE", "ftg")
-    ALGORITHM_EXECUTABLE = os.environ.get("ALGORITHM_EXECUTABLE", "ftg_node")
+    config_path = os.environ.get("SIM_CONFIG")
+    map_name = os.environ.get("MAP")
 
-    default_config = (Path(__file__).resolve().parents[1] / "config" / "levine.yaml")
-    config_path = os.environ.get("SIM_CONFIG", str(default_config))
+    sim_logger = SimulatorTestLogger(algorithm_pkg, map_name, min_speed, max_speed)
 
     simulator = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -164,13 +172,14 @@ def simulation():
     )
     
     algorithm = launch_ros.actions.Node(
-        package=ALGORITHM_PACKAGE,
-        executable=ALGORITHM_EXECUTABLE,
+        package=algorithm_pkg,
+        executable=algorithm_ex,
         output="screen",
-        parameters=[{"enable_safety": False}]
+        parameters=[{"enable_safety": False}, {"max_speed": max_speed}, {"min_speed": min_speed}]
     )
-
-    node.get_logger
+    
+    sim_logger.log_info()
+    
     return launch.LaunchDescription([
         simulator,
         algorithm,
@@ -179,39 +188,61 @@ def simulation():
 
 
 
-@pytest.mark.launch(fixture=simulation)
-def test_odometry_received():
-    rclpy.init()
+# @pytest.mark.launch(fixture=simulation)
+# def test_odometry_received():
 
-    node = rclpy.create_node("simulation_test_monitor")
-    received_messages = []
+#     algorithm = os.environ["ALGORITHM_PACKAGE"]
+#     map_name = os.environ["MAP"]
+#     min_speed = float(os.environ.get("MIN_SPEED"))
+#     max_speed = float(os.environ.get("MIN_SPEED"))
+#     sim_logger = SimulatorTestLogger(algorithm, map_name, min_speed, max_speed)
 
-    subscription = node.create_subscription(
-        Odometry,
-        "/ego_racecar/odom",
-        lambda msg: received_messages.append(msg),
-        10,
-    )
+#     sim_logger.log_test_description("Basic Odometry test")
+#     rclpy.init()
 
-    try:
-        deadline = time.monotonic() + 10.0
 
-        while time.monotonic() < deadline:
-            rclpy.spin_once(node, timeout_sec=0.1)
+#     node = rclpy.create_node("simulation_test_monitor")
+#     received_messages = []
 
-        assert received_messages, ( "Simulator did not publish odometry within 30 seconds" )
+#     subscription = node.create_subscription(
+#         Odometry,
+#         "/ego_racecar/odom",
+#         lambda msg: received_messages.append(msg),
+#         10,
+#     )
 
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
+#     try:
+#         deadline = time.monotonic() + 10.0
 
-##--- watches car's odometry, passes if loop is detected
+#         while time.monotonic() < deadline:
+#             rclpy.spin_once(node, timeout_sec=0.1)
+
+#         assert received_messages, ( "Simulator did not publish odometry within 30 seconds" )
+
+#     except Exception:
+#         sim_logger.log_result(False)
+#         raise
+#     else:
+#         sim_logger.log_result(True)
+#     finally:
+#         node.destroy_node()
+#         rclpy.shutdown()
+
+# --- watches car's odometry, passes if loop is detected
 @pytest.mark.launch(fixture=simulation)
 def test_loop_detected(request):
+    algorithm = os.environ["ALGORITHM_PACKAGE"]
+    map_name = os.environ["MAP"]
+    min_speed = float(os.environ.get("MIN_SPEED"))
+    max_speed = float(os.environ.get("MAX_SPEED"))
+    sim_logger = SimulatorTestLogger(algorithm, map_name, min_speed, max_speed)
+
+    sim_logger.log_test_description("Lap and Crash detection test")
+
     rclpy.init()
     node = rclpy.create_node("main_test")
 
-    detector = LoopDetector(radius=1.0, leave_dist=3.0)
+    loop_detector = LoopDetector(radius=1.0, leave_dist=3.0)
     # class to keep track of data relevant for crash detection
     crash_detector = CrashDetector(crash_threshold = 0.3, slowdown_threshold=0.1)
     lap_pub = node.create_publisher(String, "/lap_detected", 10)
@@ -227,8 +258,8 @@ def test_loop_detected(request):
         p = msg.pose.pose
         yaw = yaw_from_quat(p.orientation)
         t = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
-        if detector.update(p.position.x, p.position.y, yaw, t):
-            text = f"Lap {detector.laps} completed"
+        if loop_detector.update(p.position.x, p.position.y, yaw, t):
+            text = f"Lap {loop_detector.laps} completed"
             lap_pub.publish(String(data=text))
             node.get_logger().info(text)
         # Watching how the cars forward momentum changes. If it instantly goes down by a massive amount register that as a crash
@@ -245,12 +276,12 @@ def test_loop_detected(request):
             assert not(crash_detector.crash_detected), "Crash Detected During The Run"
 
     finally:
-        request.config.loop_summary = detector.summary()   # saved for the report
+        request.config.loop_summary = loop_detector.summary()   # saved for the report
         request.config.crash_summary = crash_detector.summary
         node.destroy_node()
         rclpy.shutdown()
 
     assert received, "Simulator did not publish odometry"
-    assert detector.laps >= 1, "Car did not complete a lap within 30 seconds"
-    assert not(detector.crash_detected), "Crash Detected During The Run"
+    assert loop_detector.laps >= 1, "Car did not complete a lap within 30 seconds"
+    assert not(crash_detector.crash_detected), "Crash Detected During The Run"
 
