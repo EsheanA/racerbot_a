@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-class SimulatorTestLogger:
+class SimulationTestLogger:
     def __init__(self, algorithm: str, map_name: str, min_speed: int, max_speed: int):
         self.algorithm = algorithm
         self.map_name = map_name

@@ -30,25 +30,17 @@ source install/local_setup.bash
 MAP_CONFIG="$WS_ROOT/src/f1tenth_gym_ros/config"
 MAPS_DIR="$WS_ROOT/src/f1tenth_gym_ros/maps"
 
-MAPS=("levine" "levine_blocked" "levine_obs" "Spielberg")
+MAPS=("levine_blocked" "levine_obs" "Spielberg")
 
 #ensure that the the 3 arrays always match up lengthwise and orderwise
-ALGORITHM_PACKAGES=("ftg" )
-ALGORITHM_EXECUTABLES=("ftg_node")
-
-#actual algorithms
-# ALGORITHM_PACKAGES=("ftg" "disparity_extender" "pure_pursuit_a")
-# ALGORITHM_EXECUTABLES=("ftg_node" "dispairity_extender_node" "pure_pursuit_a_node")
-
+ALGORITHM_PACKAGES=("ftg" "disparity_extender")
+ALGORITHM_EXECUTABLES=("ftg_node" "disparity_extender_node")
 # "min speed, max_speed"
 ALGORITHM_TEST_SPEEDS=(
     "2.0, 5.5" 
+    "0.7, 4.5" 
 )
-#actual speeds
-# ALGORITHM_TEST_SPEEDS=(
-#     "2.0, 5.5" 
-#     "0.7, 4.5" 
-# )
+
 # Select map (currently only works with levine)
 export SIM_CONFIG="$SCRIPT_DIR/config/sim.yaml"
 
