@@ -20,7 +20,7 @@ def generate_launch_description():
 
     min_speed_arg = DeclareLaunchArgument(
         "min_speed",
-        default_value="0.5",
+        default_value="0.7",
         description="Minimum forward speed allowed in meters per second",
     )
 
@@ -32,7 +32,7 @@ def generate_launch_description():
 
     fov_half_angle_deg_arg = DeclareLaunchArgument(
         "fov_half_angle_deg",
-        default_value="70.0",
+        default_value="100.0",
         description="Half field-of-view angle considered for processing (degrees)",
     )
 
@@ -90,6 +90,18 @@ def generate_launch_description():
         description="Deadzone angle in radians below which steering is zeroed out",
     )
 
+    steering_max_angle_arg = DeclareLaunchArgument(
+        "steering_angle_max",
+        default_value="0.349",
+        description="Maximum turning angle in radians."
+    )
+
+    max_lateral_acc_arg = DeclareLaunchArgument(
+        "max_lateral_acc",
+        default_value="3.5",
+        description="Maximum lateral acceleration in m/s^2",
+    )
+
     opponent_car = LaunchConfiguration("opponent_car")
 
     opponent_car_arg = DeclareLaunchArgument(
@@ -119,6 +131,8 @@ def generate_launch_description():
             wheelbase_arg,
             lookahead_max_arg,
             steering_deadzone_arg,
+            steering_max_angle_arg,
+            max_lateral_acc_arg,
             # Launch follow the gap
             Node(
                 package="ftg",
@@ -140,6 +154,8 @@ def generate_launch_description():
                     {"wheelbase": LaunchConfiguration("wheelbase")},
                     {"lookahead_max": LaunchConfiguration("lookahead_max")},
                     {"steering_deadzone": LaunchConfiguration("steering_deadzone")},
+                    {"steering_angle_max": LaunchConfiguration("steering_angle_max")},
+                    {"max_lateral_acc": LaunchConfiguration("max_lateral_acc")},
                 ],
                 remappings=[("/drive", drive_topic), ("/scan", scan_topic)],
             ),
