@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -o pipefail
+set -eo pipefail
 
 # Find dir location of this script
 SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
@@ -37,8 +37,8 @@ ALGORITHM_PACKAGES=("ftg" "disparity_extender")
 ALGORITHM_EXECUTABLES=("ftg_node" "disparity_extender_node")
 # "min speed, max_speed"
 ALGORITHM_TEST_SPEEDS=(
-    "2.0, 5.5" 
-    "0.7, 4.5" 
+    "2.0,5.5" 
+    "0.7,4.5" 
 )
 
 # Select map (currently only works with levine)

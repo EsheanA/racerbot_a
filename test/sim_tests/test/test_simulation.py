@@ -140,6 +140,18 @@ class CrashDetector:
         self.summary = failure_message
 
 
+@pytest.fixture
+def sim_logger():
+    algorithm = os.environ["ALGORITHM_PACKAGE"]
+    map_name = os.environ["MAP"]
+    min_speed = float(os.environ["MIN_SPEED"])
+    max_speed = float(os.environ["MAX_SPEED"])
+
+    logger = SimulationTestLogger(algorithm, map_name, min_speed, max_speed)
+    logger.log_info()
+
+    return logger
+
 @launch_pytest.fixture
 def simulation():
     sim_share = Path(
@@ -152,7 +164,7 @@ def simulation():
     min_speed = float(os.environ.get("MIN_SPEED"))
     max_speed =  float(os.environ.get("MAX_SPEED"))
     
-    map_name = os.environ.get("MAP_NAME")
+    map_name = os.environ.get("MAP")
 
     config_path = os.environ.get("SIM_CONFIG")
 
@@ -183,7 +195,7 @@ def simulation():
 
 
 @pytest.mark.launch(fixture=simulation)
-def test_odometry_received():
+def test_odometry_received(sim_logger):
     algorithm = os.environ.get("ALGORITHM_PACKAGE", "ftg")
     min_speed =  os.environ.get("MIN_SPEED")
     max_speed =  os.environ.get("MAX_SPEED")
